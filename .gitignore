@@ -517,6 +517,9 @@ Temporary Items
 *.wav
 # ignore plots
 *.png
+# ignore csv
+*.csv
+
 
 !config/template.yaml
 config
