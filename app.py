@@ -1,3 +1,10 @@
+'''
+TODO:
+    + [ ] Load Configuration
+    + [ ] Checking
+    + [ ] Better saving directory
+'''
+
 from transformers import pipeline
 import yaml
 from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
@@ -6,7 +13,7 @@ import gradio as gr
 import torchaudio
 import torch
 import torch.nn as nn
-import lightning_module
+import src.lightning_module
 import pdb
 import jiwer
 from pathlib import Path
@@ -16,6 +23,7 @@ import librosa
 import librosa.display
 import matplotlib.pyplot as plt
 
+# Load automos
 config_yaml = sys.argv[1]
 with open(config_yaml, "r") as f:
     pdb.set_trace()
@@ -87,11 +95,14 @@ class ChangeSampleRate(nn.Module):
             round_up * indices.fmod(1.).unsqueeze(0)
         return output
 
+
 # MOS model
 model = lightning_module.BaselineLightningModule.load_from_checkpoint(
-    "epoch=3-step=7459.ckpt").eval()
+    "src/epoch=3-step=7459.ckpt").eval()
 
 # Get Speech Interval
+
+
 def get_speech_interval(signal, db):
     audio_interv = librosa.effects.split(signal, top_db=db)
     pause_end = [x[0] for x in audio_interv[1:]]
@@ -100,6 +111,7 @@ def get_speech_interval(signal, db):
     return audio_interv, pause_interv
 
 # plot UV
+
 
 def plot_UV(signal, audio_interv, sr):
     fig, ax = plt.subplots(nrows=2, sharex=True)
@@ -160,7 +172,7 @@ def calc_mos(audio_path, id, ref, pre_ppm, fig):
         error_msg += "ERROR: Please speak faster.\n"
     elif predic_mos <= float(config["thre"]["AUTOMOS"]):
         error_msg += "ERROR: Naturalness is too low, Please try again.\n"
-    elif wer >=  float(config["thre"]["WER"]):
+    elif wer >= float(config["thre"]["WER"]):
         error_msg += "ERROR: Intelliablity is too low, Please try again\n"
     else:
         error_msg = "Good JOB! Please click the Flag Button to save this record.\n You can start recording the next one."
@@ -188,7 +200,7 @@ Requirements: \n
 Predicted MOS >=%f \n
 WER <= %f \n
 Pef PPM - %f < PPM < Ref PPM + %f \n
-"""%(float(config["thre"]["AUTOMOS"]), float(config["thre"]["WER"]), -float(config["thre"]["minppm"]), float(config["thre"]["maxppm"]))
+""" % (float(config["thre"]["AUTOMOS"]), float(config["thre"]["WER"]), -float(config["thre"]["minppm"]), float(config["thre"]["maxppm"]))
 
 # Auto load examples
 refs = np.loadtxt("p326_split.txt", delimiter="\n", dtype="str")

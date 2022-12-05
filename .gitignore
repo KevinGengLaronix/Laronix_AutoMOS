@@ -514,6 +514,9 @@ Temporary Items
 !.gitsubmodules
 
 # ignore data
+data/
+exp/
+!src/lightning_module.py
 *.wav
 # ignore plots
 *.png
@@ -524,3 +527,8 @@ Temporary Items
 !config/template.yaml
 config
 !local
+
+## Currently
+src/wav2vec_small.pt
+*.ckpt
+*.bak
