@@ -5,6 +5,9 @@ TODO:
     + [ ] Better saving directory
 '''
 
+import matplotlib.pyplot as plt
+import librosa.display
+import librosa
 from transformers import pipeline
 import yaml
 from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
@@ -13,20 +16,21 @@ import gradio as gr
 import torchaudio
 import torch
 import torch.nn as nn
-import src.lightning_module
 import pdb
 import jiwer
 from pathlib import Path
 import numpy as np
+from pathlib import Path
+
 import sys
-import librosa
-import librosa.display
-import matplotlib.pyplot as plt
+# path_root = Path(__file__).parents[2]
+sys.path.append("src")
+import lightning_module 
 
 # Load automos
 config_yaml = sys.argv[1]
 with open(config_yaml, "r") as f:
-    pdb.set_trace()
+    # pdb.set_trace()
     try:
         config = yaml.safe_load(f)
     except FileExistsError:
@@ -202,12 +206,12 @@ WER <= %f \n
 Pef PPM - %f < PPM < Ref PPM + %f \n
 """ % (float(config["thre"]["AUTOMOS"]), float(config["thre"]["WER"]), -float(config["thre"]["minppm"]), float(config["thre"]["maxppm"]))
 
-# Auto load examples
-refs = np.loadtxt("p326_split.txt", delimiter="\n", dtype="str")
-refs_ids = [x.split(" ")[0] for x in refs]
-refs_txt = [" ".join(x.split(" ")[1:]) for x in refs]
-ref_feature = np.loadtxt("p326_split_ref.csv", delimiter=",", dtype="str")
-ref_wavs = [str(x) for x in sorted(Path("p326_split").glob("**/*.wav"))]
+# # Auto load examples
+# refs = np.loadtxt("p326_split.txt", delimiter="\n", dtype="str")
+# refs_ids = [x.split(" ")[0] for x in refs]
+# refs_txt = [" ".join(x.split(" ")[1:]) for x in refs]
+# ref_feature = np.loadtxt("p326_split_ref.csv", delimiter=",", dtype="str")
+# ref_wavs = [str(x) for x in sorted(Path("p326_split").glob("**/*.wav"))]
 
 refs_ppm = np.array(ref_feature[:, -1][1:], dtype="str")
 reference_id = gr.Textbox(value="ID",
@@ -271,7 +275,7 @@ info = gr.Interface(fn=record_part_info,
                     inputs=[name, gender, first_lng],
                     outputs=[msg, id_str],
                     title="Participant information Page",
-                    allow_flagging="manual",
+                    allow_flagging="never",
                     css="body {background-color: blue}"
                     )
 # Experiment
