@@ -1,3 +1,28 @@
+# TODO:
++ [ ] Design directory structure
+
+```
+- Laronix_AUTOMOS
+    - data
+        - Template
+            - ref_wav/
+                - 1.wav
+                - 2.wav
+                - ...
+            - ref_txt.txt
+            - ref.csv # audio prosody features reference <generate by script>
+    - exp
+        - Template
+            - Audio_to_evaluate # RAW WAV DATA
+            - log.csv # Recording log 
+            - output # wav.file  <generate by script>
+    - model
+        - epoch=3-step=7459.ckpt # MOS estimate model
+        - wav2vec_small.pt # WER model
+    - local
+        - get_ref_PPM.py # script for generating data/<ref_dir>/ref.csv
+        - post_processing.py # script for generating exp/<ref_dir>/output/*.wav
+```
 ---
 title: Laronix Automos
 emoji: 🏃
