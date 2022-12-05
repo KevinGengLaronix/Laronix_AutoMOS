@@ -99,3 +99,5 @@ tensorboardX
 jiwer
 phonemizer
 librosa
+
+rich
