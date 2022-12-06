@@ -2,35 +2,45 @@
 TODO:
     Automatic generate Config
 '''
+import argparse
 import sys
 from pathlib import Path
-root_path = Path(__file__).parents[1]
-sys.path.append(str(root_path))
-
-import argparse
-from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
-from random import sample
-from sys import flags
-import gradio as gr
-import torchaudio
-import torch
-import torch.nn as nn
-import src.lightning_module as lightning_module
-import pdb
-import jiwer
-import numpy as np
-# from tqdm import tqdm
+sys.path.append("./src")
+import lightning_module
+from UV import plot_UV, get_speech_interval
+from transformers import pipeline
 from rich.progress import track
+import numpy as np
+import jiwer
+import pdb
+import torch.nn as nn
+import torch
+import torchaudio
+import gradio as gr
+from sys import flags
+from random import sample
+from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
+
+# root_path = Path(__file__).parents[1]
 
 # Argparse
 parser = argparse.ArgumentParser(
-                    prog = 'ProgramName',
-                    description = 'What the program does',
-                    epilog = 'Text at the bottom of help')
-parser.add_argument("--ref_txt", type=str, required=True)
-parser.add_argument("--ref_wavs", type=str, required=True)
-parser.add_argument("--target_dir", type=str, required=True)
-parser.add_argument("--tag", type=str, default=None, required=False)
+    prog='get_ref_PPM',
+    description='Generate Phoneme per Minute (and Voice/Unvoice plot)',
+    epilog='')
+parser.add_argument("--tag", type=str, default=None,
+                    required=False, help="ID tag for output *.csv")
+parser.add_argument("--ref_txt", type=str, required=True,
+                    help="Reference TXT")
+parser.add_argument("--ref_wavs", type=str, required=True,
+                    help="Reference WAVs")
+parser.add_argument("--output_dir", type=str, required=True,
+                    help="Output Directory for *.csv")
+
+parser.add_argument("--UV_flag", choices=["True", "False"],
+                    default="False", help="Toggle for U/V plot")
+parser.add_argument("--UV_thre", type=float,
+                    default=40, help="U/V threshold dB")
 args = parser.parse_args()
 
 refs = np.loadtxt(args.ref_txt, delimiter="\n", dtype="str")
@@ -44,9 +54,8 @@ try:
 except ValueError:
     print("Error: Text and Wavs don't match")
     exit()
-    
+
 # ASR part
-from transformers import pipeline
 p = pipeline("automatic-speech-recognition")
 
 # WER part
@@ -132,14 +141,6 @@ Add ASR based on wav2vec-960, currently only English available.
 Add WER interface.
 """
 
-# # Auto load examples
-
-# refs = np.loadtxt("Arthur_the_rat.txt", delimiter="\n", dtype="str")
-# refs_ids = [x.split(" ")[0] for x in refs]
-# refs_txt = [" ".join(x.split(" ")[1:]) for x in refs]
-# ref_wavs = [str(x) for x in sorted(
-#     Path("Patient_sil_trim_16k_normed_5_snr_40/Arthur_the_rat").glob("**/*.wav"))]
-
 referance_id = gr.Textbox(value="ID",
                           placeholder="Utter ID",
                           label="Reference_ID")
@@ -149,18 +150,44 @@ referance_textbox = gr.Textbox(value="",
 # Set up interface
 result = []
 result.append("id, pred_mos, trans, wer, pred_phone, ppm")
-for id, x, y in track(zip(refs_ids, ref_wavs, refs_txt), total=len(refs_ids), description="Loading references information"):
-    predic_mos, trans, wer, phone_transcription, ppm = calc_mos(x, y)
-    record = ",".join([id, str(predic_mos), str(trans), str(
-        wer), str(phone_transcription), str(ppm)])
-    result.append(record)
 
+if args.UV_flag == "False":
+    for id, x, y in track(zip(refs_ids, ref_wavs, refs_txt), total=len(refs_ids), description="Loading references information"):
+        predic_mos, trans, wer, phone_transcription, ppm = calc_mos(x, y)
+        record = ",".join([id,
+                           str(predic_mos),
+                           str(trans),
+                           str(wer),
+                           str(phone_transcription),
+                           str(ppm)])
+        result.append(record)
+
+elif args.UV_flag == "True":
+    fig_tardir = Path(args.ref_wavs) / Path("PPM_figs")
+    Path.mkdir(Path(args.ref_wavs) / Path("PPM_figs"), exist_ok=True)
+
+    for id, x, y in track(zip(refs_ids, ref_wavs, refs_txt), total=len(refs_ids), description="Loading references information"):
+        # UV ploting
+        wav, sr = torchaudio.load(x)
+        wav_vad = torchaudio.functional.vad(wav, sample_rate=sr)
+        a_h, p_h = get_speech_interval(wav_vad.numpy(), db=args.UV_thre)
+        fig_h = plot_UV(wav_vad.numpy().squeeze(), a_h, sr=sr)
+        fig_h.savefig(Path(fig_tardir)/Path(id + ".png"), dpi=200)
+        # Acoustic calculation
+        predic_mos, trans, wer, phone_transcription, ppm = calc_mos(x, y)
+        record = ",".join([id,
+                           str(predic_mos),
+                           str(trans),
+                           str(wer),
+                           str(phone_transcription),
+                           str(ppm)])
+        result.append(record)
 # Output
 if args.tag == None:
     args.tag = Path(args.ref_wavs).stem
-## Make output_dir
+# Make output_dir
 # pdb.set_trace()
-Path.mkdir(Path(args.target_dir), exist_ok=True)
+Path.mkdir(Path(args.output_dir), exist_ok=True)
 # pdb.set_trace()
-with open("%s/%s.csv"%(args.target_dir, args.tag), "w") as f:
+with open("%s/%s.csv" % (args.output_dir, args.tag), "w") as f:
     print("\n".join(result), file=f)

@@ -529,6 +529,6 @@ config
 !local
 
 ## Currently
-# src/wav2vec_small.pt
+src/wav2vec_small.pt
 *.ckpt
 *.bak

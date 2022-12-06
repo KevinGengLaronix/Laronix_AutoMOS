@@ -5,6 +5,7 @@ TODO:
     + [ ] Better saving directory
 '''
 
+import lightning_module
 import matplotlib.pyplot as plt
 import librosa.display
 import librosa
@@ -24,7 +25,6 @@ from pathlib import Path
 
 import sys
 sys.path.append("src")
-import lightning_module
 # path_root = Path(__file__).parents[2]
 
 # Load automos
@@ -159,15 +159,15 @@ def calc_mos(audio_path, id, ref, pre_ppm, fig):
     phone_predicted_ids = torch.argmax(logits, dim=-1)
     phone_transcription = processor.batch_decode(phone_predicted_ids)
     lst_phonemes = phone_transcription[0].split(" ")
+
+    # VAD for pause detection
     wav_vad = torchaudio.functional.vad(wav, sample_rate=sr)
 
     a_h, p_h = get_speech_interval(wav_vad.numpy(), db=40)
-    print(a_h)
-    print(len(a_h))
+    # print(a_h)
+    # print(len(a_h))
     fig_h = plot_UV(wav_vad.numpy().squeeze(), a_h, sr=sr)
     ppm = len(lst_phonemes) / (wav_vad.shape[-1] / sr) * 60
-    # if float(predic_mos) >= 3.0:
-    #     torchaudio.save("good.wav", wav,sr)
 
     error_msg = "!!! ERROR MESSAGE !!!\n"
     if ppm >= float(pre_ppm) + float(config["thre"]["maxppm"]):
@@ -259,7 +259,7 @@ def record_part_info(name, gender, first_lng):
 name = gr.Textbox(placeholder="Name", label="Name")
 gender = gr.CheckboxGroup(["Male", "Female"], label="gender")
 first_lng = gr.CheckboxGroup(
-    ["B1 Intermediate", "B2: Upper Intermediate", "C1: Advanced", "C2: Proficient",], label="English Proficiency (CEFR)")
+    ["B1 Intermediate", "B2: Upper Intermediate", "C1: Advanced", "C2: Proficient", ], label="English Proficiency (CEFR)")
 
 msg = gr.Textbox(
     placeholder="Evaluation for valid participant", label="message")
@@ -295,7 +295,7 @@ iface = gr.Interface(
     title="Laronix's Voice Quality Checking System",
     description=description,
     allow_flagging="manual",
-    flagging_dir="./exp/%s"%config["exp_id"],
+    flagging_dir="./exp/%s" % config["exp_id"],
     flagging_options=["Perfect", "Suspicious_Speaking_Rate",
                       "Suspicious_Naturalness", "Suspicious_Pause"],
     examples=examples,

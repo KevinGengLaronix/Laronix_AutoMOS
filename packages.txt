@@ -1,2 +1,2 @@
 festival 
-espeak-ng
+espeak # or espeak-ng on Linux
