@@ -1,5 +1,6 @@
 # TODO:
 + [ ] Design directory structure
++ [ ] Usage
 
 ```
 - Laronix_AUTOMOS
@@ -37,3 +38,11 @@ license: afl-3.0
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
 # Laronix_AutoMOS
+
+## Usage:
+### Step 1: Prepare data and text
+`<todo>`
+### Step 2: Preprocessing
+```
+python local/get_ref_PPM.py
+```

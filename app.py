@@ -1,6 +1,6 @@
 '''
 TODO:
-    + [ ] Load Configuration
+    + [x] Load Configuration
     + [ ] Checking
     + [ ] Better saving directory
 '''
@@ -23,9 +23,9 @@ import numpy as np
 from pathlib import Path
 
 import sys
-# path_root = Path(__file__).parents[2]
 sys.path.append("src")
-import lightning_module 
+import lightning_module
+# path_root = Path(__file__).parents[2]
 
 # Load automos
 config_yaml = sys.argv[1]
@@ -177,9 +177,9 @@ def calc_mos(audio_path, id, ref, pre_ppm, fig):
     elif predic_mos <= float(config["thre"]["AUTOMOS"]):
         error_msg += "ERROR: Naturalness is too low, Please try again.\n"
     elif wer >= float(config["thre"]["WER"]):
-        error_msg += "ERROR: Intelliablity is too low, Please try again\n"
+        error_msg += "ERROR: Intelligibility is too low, Please try again\n"
     else:
-        error_msg = "Good JOB! Please click the Flag Button to save this record.\n You can start recording the next one."
+        error_msg = "GOOD JOB! Please click the Flag as Perfect to save this record.\n You can start recording the next sample."
 
     return predic_mos, trans, wer, phone_transcription, ppm, fig_h, error_msg
 
@@ -188,30 +188,24 @@ def calc_mos(audio_path, id, ref, pre_ppm, fig):
 description = """
 This is the experiment page for Laronix Data Recording.\n
 \n
-1. Select one example from below, a Pneumatic Voice file, a transcription, and its speaking rate will be loaded as inputs.\n
-    You can check the pneumatic samples first and prepare for reading the transcription at a similar tempo.\n
-2. Delete the pneumatic voice (click the X button on the right), a recording button will appear.\n
-3. Click the recording button to start recording, click again to stop. Make sure you are not mispronouncing or include any detectable noises.\n
+1. Select one example from below, a sound file, with its reference transcription and its speaking rate will be loaded as inputs.\n
+    You can check the sound file first and prepare for reading the transcription at a similar tempo.\n
+2. Delete the sound file (click the X button on the right), a recording button will appear.\n
+3. Click the recording button to start, click again to stop. Make sure you are not mispronouncing or including any detectable noises.\n
 4. Click "Submit" button and wait for the result.\n
 5. Please check the message box to see the feedback, if ERROR appears, delete your previous recording and try again :).\n
-6. If "Good JOB!" message appears, click "Flag as Perfect" and start another recording.\n
+6. If "GOOD JOB!" message appears, click "Flag as Perfect" and start another recording.\n
 7. If you try several times (N >= 10) and still can not clear the mission, you can flag your best recording by clicking "Doubtful Speaking Rate" or "Doubtful Naturalness". \n
     Yet this seldom happens, so please try to meet the system's requirement first!\n
 8. If you have any other question, Please contact kevin@laronix.com \n
 
 Requirements: \n
 
-Predicted MOS >=%f \n
-WER <= %f \n
-Pef PPM - %f < PPM < Ref PPM + %f \n
+Predicted MOS >=%0.2f \n
+WER <= %0.2f \n
+Pef PPM - %0.1f < PPM < Ref PPM + %0.1f \n
 """ % (float(config["thre"]["AUTOMOS"]), float(config["thre"]["WER"]), -float(config["thre"]["minppm"]), float(config["thre"]["maxppm"]))
 
-# # Auto load examples
-# refs = np.loadtxt("p326_split.txt", delimiter="\n", dtype="str")
-# refs_ids = [x.split(" ")[0] for x in refs]
-# refs_txt = [" ".join(x.split(" ")[1:]) for x in refs]
-# ref_feature = np.loadtxt("p326_split_ref.csv", delimiter=",", dtype="str")
-# ref_wavs = [str(x) for x in sorted(Path("p326_split").glob("**/*.wav"))]
 
 refs_ppm = np.array(ref_feature[:, -1][1:], dtype="str")
 reference_id = gr.Textbox(value="ID",
@@ -239,7 +233,7 @@ def record_part_info(name, gender, first_lng):
     id_str = "%s_%s_%s" % (name, gender[0], first_lng[0])
 
     if name == None:
-        message = "ERROR: Name Information imcompleted!"
+        message = "ERROR: Name Information incomplete!"
         id_str = "ERROR"
 
     if gender == None:
@@ -255,30 +249,32 @@ def record_part_info(name, gender, first_lng):
         id_str = "ERROR"
 
     if len(first_lng) > 1:
-        message = "ERROR: Please select one english proficienty only"
+        message = "ERROR: Please select one english proficiency only"
         id_str = "ERROR"
 
     return message, id_str
 
 
-# infomation page
+# information page
 name = gr.Textbox(placeholder="Name", label="Name")
 gender = gr.CheckboxGroup(["Male", "Female"], label="gender")
 first_lng = gr.CheckboxGroup(
-    ["English", "Others"], label="English Proficiency")
+    ["B1 Intermediate", "B2: Upper Intermediate", "C1: Advanced", "C2: Proficient",], label="English Proficiency (CEFR)")
 
 msg = gr.Textbox(
-    placeholder="Evalutation for valid participant", label="message")
+    placeholder="Evaluation for valid participant", label="message")
 id_str = gr.Textbox(placeholder="participant id", label="participant_id")
 
 info = gr.Interface(fn=record_part_info,
                     inputs=[name, gender, first_lng],
                     outputs=[msg, id_str],
-                    title="Participant information Page",
+                    title="Participant Information Page",
                     allow_flagging="never",
                     css="body {background-color: blue}"
                     )
 # Experiment
+if config["exp_id"] == None:
+    config["exp_id"] = Path(config_yaml).stem
 
 iface = gr.Interface(
     fn=calc_mos,
@@ -296,12 +292,12 @@ iface = gr.Interface(
              gr.Plot(PlaceHolder="Wav/Pause Plot", label="wav_pause_plot"),
              gr.Textbox(placeholder="Recording Feedback", label="message")],
 
-    title="Laronix's Voice Quality Checking System Demo",
+    title="Laronix's Voice Quality Checking System",
     description=description,
     allow_flagging="manual",
-    flagging_dir="./exp/Kathryn_p326",
-    flagging_options=["Perfect", "Susbicious_Speaking_Rate",
-                      "Susbicious_Naturalness", "Susbicious_Pause"],
+    flagging_dir="./exp/%s"%config["exp_id"],
+    flagging_options=["Perfect", "Suspicious_Speaking_Rate",
+                      "Suspicious_Naturalness", "Suspicious_Pause"],
     examples=examples,
     css="body {background-color: green}"
 )
@@ -309,6 +305,7 @@ iface = gr.Interface(
 print("Launch examples")
 
 demo = gr.TabbedInterface([info, iface], tab_names=[
-                          "Participant information", "Experiment"])
-
-demo.launch(share=True, auth=[("Kathryn", "Laronix1130")])
+                          "Participant Information", "Experiment"])
+assert config["auth"]["username"] != None
+demo.launch(share=True, auth=[
+            (config["auth"]["username"], config["auth"]["password"])])
