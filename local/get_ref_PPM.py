@@ -2,6 +2,7 @@
 TODO:
     Automatic generate Config
 '''
+import yaml 
 import argparse
 import sys
 from pathlib import Path
@@ -36,6 +37,8 @@ parser.add_argument("--ref_wavs", type=str, required=True,
                     help="Reference WAVs")
 parser.add_argument("--output_dir", type=str, required=True,
                     help="Output Directory for *.csv")
+parser.add_argument("--to_config", choices=["True", "False"],
+                    default="False", help="Generating Config from .txt and wavs/*wav")
 
 parser.add_argument("--UV_flag", choices=["True", "False"],
                     default="False", help="Toggle for U/V plot")
@@ -191,3 +194,23 @@ Path.mkdir(Path(args.output_dir), exist_ok=True)
 # pdb.set_trace()
 with open("%s/%s.csv" % (args.output_dir, args.tag), "w") as f:
     print("\n".join(result), file=f)
+    
+# Generating config
+if args.to_config == "True":
+    config_dict = {
+        "exp_id": args.tag,
+        "ref_txt": args.ref_txt,
+        "ref_feature": "%s/%s.csv" % (args.output_dir, args.tag),
+        "ref_wavs": args.ref_wavs,
+        "thre":{
+            "minppm": 100,
+            "maxppm": 100, 
+            "WER": 0.1,
+            "AUTOMOS": 4.0
+        },
+        "auth":{
+            "username": None,
+            "password": None
+        }
+    }
+    yaml.dump(config_dict)

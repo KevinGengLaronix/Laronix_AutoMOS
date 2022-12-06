@@ -2,6 +2,7 @@
 + [ ] Design directory structure
 + [ ] Usage
 
+
 ```
 - Laronix_AUTOMOS
     - data
@@ -24,6 +25,7 @@
         - get_ref_PPM.py # script for generating data/<ref_dir>/ref.csv
         - post_processing.py # script for generating exp/<ref_dir>/output/*.wav
 ```
+
 ---
 title: Laronix Automos
 emoji: 🏃
@@ -37,6 +39,7 @@ license: afl-3.0
 ---
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+
 # Laronix_AutoMOS
 
 ## Usage:
@@ -44,5 +47,6 @@ Check out the configuration reference at https://huggingface.co/docs/hub/spaces-
 `<todo>`
 ### Step 2: Preprocessing
 ```
-python local/get_ref_PPM.py
+## Generating *.csv (and Voice/Unvoice Plot)
+python local/get_ref_PPM.py --ref_txt <ref_text> --ref_wavs <ref_wavs> --output_dir <output_dir> {--UV_flag <True/False> --UV_thre <UV_thre>}
 ```
