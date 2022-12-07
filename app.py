@@ -1,3 +1,9 @@
+"""
+TODO:
+    + [x] Load Configuration
+    + [ ] Checking
+    + [ ] Better saving directory
+"""
 import numpy as np
 from pathlib import Path
 import jiwer
@@ -13,19 +19,13 @@ from transformers import pipeline
 import librosa
 import librosa.display
 import matplotlib.pyplot as plt
+
+
+# local import
 import sys
 
 sys.path.append("src")
-# local import
-
 import lightning_module
-
-"""
-TODO:
-    + [x] Load Configuration
-    + [ ] Checking
-    + [ ] Better saving directory
-"""
 
 
 # Load automos
@@ -46,17 +46,24 @@ ref_feature = np.loadtxt(config["ref_feature"], delimiter=",", dtype="str")
 ref_wavs = [str(x) for x in sorted(Path(config["ref_wavs"]).glob("**/*.wav"))]
 
 refs_ppm = np.array(ref_feature[:, -1][1:], dtype="str")
-reference_id = gr.Textbox(value="ID", placeholder="Utter ID", label="Reference_ID")
+reference_id = gr.Textbox(
+    value="ID", placeholder="Utter ID", label="Reference_ID"
+)
 
 reference_textbox = gr.Textbox(
-    value="Input reference here", placeholder="Input reference here", label="Reference"
+    value="Input reference here",
+    placeholder="Input reference here",
+    label="Reference",
 )
-reference_PPM = gr.Textbox(placeholder="Pneumatic Voice's PPM", label="Ref PPM")
-# Flagging setup
+reference_PPM = gr.Textbox(
+    placeholder="Pneumatic Voice's PPM", label="Ref PPM"
+)
 
 # Set up interface
 print("Preparing Examples")
-examples = [[w, i, x, y] for w, i, x, y in zip(ref_wavs, refs_ids, refs_txt, refs_ppm)]
+examples = [
+    [w, i, x, y] for w, i, x, y in zip(ref_wavs, refs_ids, refs_txt, refs_ppm)
+]
 
 # ASR part
 p = pipeline("automatic-speech-recognition")
@@ -73,9 +80,12 @@ transformation = jiwer.Compose(
 )
 
 # WPM part
-processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-xlsr-53-espeak-cv-ft")
-phoneme_model = Wav2Vec2ForCTC.from_pretrained("facebook/wav2vec2-xlsr-53-espeak-cv-ft")
-# phoneme_model =  pipeline(model="facebook/wav2vec2-xlsr-53-espeak-cv-ft")
+processor = Wav2Vec2Processor.from_pretrained(
+    "facebook/wav2vec2-xlsr-53-espeak-cv-ft"
+)
+phoneme_model = Wav2Vec2ForCTC.from_pretrained(
+    "facebook/wav2vec2-xlsr-53-espeak-cv-ft"
+)
 
 
 class ChangeSampleRate(nn.Module):
@@ -88,12 +98,14 @@ class ChangeSampleRate(nn.Module):
         # Only accepts 1-channel waveform input
         wav = wav.view(wav.size(0), -1)
         new_length = wav.size(-1) * self.output_rate // self.input_rate
-        indices = torch.arange(new_length) * (self.input_rate / self.output_rate)
+        indices = torch.arange(new_length) * (
+            self.input_rate / self.output_rate
+        )
         round_down = wav[:, indices.long()]
         round_up = wav[:, (indices.long() + 1).clamp(max=wav.size(-1) - 1)]
-        output = round_down * (1.0 - indices.fmod(1.0)).unsqueeze(
-            0
-        ) + round_up * indices.fmod(1.0).unsqueeze(0)
+        output = round_down * (1.0 - indices.fmod(1.0)).unsqueeze(0) + (
+            round_up * indices.fmod(1.0).unsqueeze(0)
+        )
         return output
 
 
@@ -142,7 +154,10 @@ def calc_mos(audio_path, id, ref, pre_ppm, fig):
 
     # WER
     wer = jiwer.wer(
-        ref, trans, truth_transform=transformation, hypothesis_transform=transformation
+        ref,
+        trans,
+        truth_transform=transformation,
+        hypothesis_transform=transformation,
     )
     # MOS
     batch = {
@@ -182,7 +197,15 @@ def calc_mos(audio_path, id, ref, pre_ppm, fig):
     else:
         error_msg = "GOOD JOB! Please click the Flag as Perfect to save this record.\n You can start recording the next sample."
 
-    return predic_mos, trans, wer, phone_transcription, ppm, fig_h, error_msg
+    return (
+        predic_mos,
+        trans,
+        wer,
+        phone_transcription,
+        ppm,
+        fig_h,
+        error_msg,
+    )
 
 
 # Description
@@ -214,22 +237,28 @@ Pef PPM - %0.1f < PPM < Ref PPM + %0.1f \n
 
 
 refs_ppm = np.array(ref_feature[:, -1][1:], dtype="str")
-reference_id = gr.Textbox(value="ID", placeholder="Utter ID", label="Reference_ID")
-reference_textbox = gr.Textbox(
-    value="Input reference here", placeholder="Input reference here", label="Reference"
+reference_id = gr.Textbox(
+    value="ID", placeholder="Utter ID", label="Reference_ID"
 )
-reference_PPM = gr.Textbox(placeholder="Pneumatic Voice's PPM", label="Ref PPM")
+reference_textbox = gr.Textbox(
+    value="Input reference here",
+    placeholder="Input reference here",
+    label="Reference",
+)
+reference_PPM = gr.Textbox(
+    placeholder="Pneumatic Voice's PPM", label="Ref PPM"
+)
 
 # Flagging setup
 
 # Set up interface
 print("Preparing Examples")
-examples = [[w, i, x, y] for w, i, x, y in zip(ref_wavs, refs_ids, refs_txt, refs_ppm)]
+examples = [
+    [w, i, x, y] for w, i, x, y in zip(ref_wavs, refs_ids, refs_txt, refs_ppm)
+]
 
 # Interface
 # Participant Information
-
-
 def record_part_info(name, gender, first_lng):
     message = "Participant information is successfully collected."
     id_str = "%s_%s_%s" % (name, gender[0], first_lng[0])
@@ -270,7 +299,9 @@ first_lng = gr.CheckboxGroup(
     label="English Proficiency (CEFR)",
 )
 
-msg = gr.Textbox(placeholder="Evaluation for valid participant", label="message")
+msg = gr.Textbox(
+    placeholder="Evaluation for valid participant", label="message"
+)
 id_str = gr.Textbox(placeholder="participant id", label="participant_id")
 
 info = gr.Interface(
@@ -288,7 +319,11 @@ if config["exp_id"] == None:
 iface = gr.Interface(
     fn=calc_mos,
     inputs=[
-        gr.Audio(source="microphone", type="filepath", label="Audio_to_evaluate"),
+        gr.Audio(
+            source="microphone",
+            type="filepath",
+            label="Audio_to_evaluate",
+        ),
         reference_id,
         reference_textbox,
         reference_PPM,
@@ -298,7 +333,10 @@ iface = gr.Interface(
         gr.Textbox(placeholder="Predicted MOS", label="Predicted MOS"),
         gr.Textbox(placeholder="Hypothesis", label="Hypothesis"),
         gr.Textbox(placeholder="Word Error Rate", label="WER"),
-        gr.Textbox(placeholder="Predicted Phonemes", label="Predicted Phonemes"),
+        gr.Textbox(
+            placeholder="Predicted Phonemes",
+            label="Predicted Phonemes",
+        ),
         gr.Textbox(placeholder="Phonemes per minutes", label="PPM"),
         gr.Plot(PlaceHolder="Wav/Pause Plot", label="wav_pause_plot"),
         gr.Textbox(placeholder="Recording Feedback", label="message"),
@@ -323,4 +361,7 @@ demo = gr.TabbedInterface(
     [info, iface], tab_names=["Participant Information", "Experiment"]
 )
 assert config["auth"]["username"] != None
-demo.launch(share=True, auth=[(config["auth"]["username"], config["auth"]["password"])])
+demo.launch(
+    share=True,
+    auth=[(config["auth"]["username"], config["auth"]["password"])],
+)
