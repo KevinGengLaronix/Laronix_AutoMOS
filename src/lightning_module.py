@@ -1,3 +1,5 @@
+import sys
+sys.path.append("src")
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
@@ -16,7 +18,7 @@ class BaselineLightningModule(pl.LightningModule):
     
     def construct_model(self):
         self.feature_extractors = nn.ModuleList([
-            load_ssl_model(cp_path='wav2vec_small.pt'),
+            load_ssl_model(cp_path='src/wav2vec_small.pt'),
             DomainEmbedding(3,128),
         ])
         output_dim = sum([ feature_extractor.get_output_dim() for feature_extractor in self.feature_extractors])
