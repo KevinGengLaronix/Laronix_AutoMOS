@@ -54,5 +54,19 @@ python local/get_ref_PPM.py --ref_txt <ref_text> \
                             --to_config <True/False> \
                             --UV_flag <True/False> \
                             --UV_thre <UV_thre>}
+```
+### Step 3: Launch Recording session:
 
+```
+## Start app.py
+python app.py <config.yaml>
+```
++ **Find logging below and lick URL to start**
+```
+Launch examples
+Running on local URL:  http://127.0.0.1:7860/
+...
+    (Logs...)
+...
+Running on public URL: https://87abe771e93229da.gradio.app
 ```
