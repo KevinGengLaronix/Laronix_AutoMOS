@@ -47,6 +47,12 @@ Check out the configuration reference at https://huggingface.co/docs/hub/spaces-
 `<todo>`
 ### Step 2: Preprocessing
 ```
-## Generating *.csv (and Voice/Unvoice Plot)
-python local/get_ref_PPM.py --ref_txt <ref_text> --ref_wavs <ref_wavs> --output_dir <output_dir> {--UV_flag <True/False> --UV_thre <UV_thre>}
+## Generating *.csv, Voice/Unvoice Plot (optional) and config (optional)
+python local/get_ref_PPM.py --ref_txt <ref_text> \
+                            --ref_wavs <ref_wavs> \
+                            --output_dir <output_dir> \
+                            --to_config <True/False> \
+                            --UV_flag <True/False> \
+                            --UV_thre <UV_thre>}
+
 ```
