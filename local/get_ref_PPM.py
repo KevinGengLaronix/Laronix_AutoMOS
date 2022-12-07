@@ -1,6 +1,6 @@
 """
 TODO:
-    Automatic generate Config
+    [DONE]: Automatic generating Config
 """
 
 import yaml
