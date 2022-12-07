@@ -55,7 +55,7 @@ python local/get_ref_PPM.py --ref_txt <ref_text> \
                             --UV_flag <True/False> \
                             --UV_thre <UV_thre>}
 ```
-### Step 3: Launch Recording session:
+### Step 3: Launch recording session:
 
 ```
 ## Start app.py
