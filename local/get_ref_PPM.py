@@ -135,7 +135,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     refs = np.loadtxt(args.ref_txt, delimiter="\n", dtype="str")
-    refs_ids = [x.split(" ")[0] for x in refs]
+    refs_ids = [x.split("\t")[0] for x in refs]
     refs_txt = [" ".join(x.split(" ")[1:]) for x in refs]
     ref_wavs = [str(x) for x in sorted(Path(args.ref_wavs).glob("**/*.wav"))]
     # pdb.set_trace()

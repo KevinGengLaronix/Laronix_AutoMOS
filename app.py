@@ -188,7 +188,7 @@ def calc_mos(audio_path, id, ref, pre_ppm, fig):
     error_msg = "!!! ERROR MESSAGE !!!\n"
     if ppm >= float(pre_ppm) + float(config["thre"]["maxppm"]):
         error_msg += "ERROR: Please speak slower.\n"
-    elif ppm <= float(pre_ppm) + float(config["thre"]["minppm"]):
+    elif ppm <= float(pre_ppm) - float(config["thre"]["minppm"]):
         error_msg += "ERROR: Please speak faster.\n"
     elif predic_mos <= float(config["thre"]["AUTOMOS"]):
         error_msg += "ERROR: Naturalness is too low, Please try again.\n"
