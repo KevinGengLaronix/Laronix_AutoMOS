@@ -40,8 +40,8 @@ with open(config_yaml, "r") as f:
 
 # Auto load examples
 refs = np.loadtxt(config["ref_txt"], delimiter="\n", dtype="str")
-refs_ids = [x.split(" ")[0] for x in refs]
-refs_txt = [" ".join(x.split(" ")[1:]) for x in refs]
+refs_ids = [x.split("\t")[0] for x in refs]
+refs_txt = [" ".join(x.split("\t")[1:]) for x in refs]
 ref_feature = np.loadtxt(config["ref_feature"], delimiter=",", dtype="str")
 ref_wavs = [str(x) for x in sorted(Path(config["ref_wavs"]).glob("**/*.wav"))]
 
@@ -231,7 +231,7 @@ Pef PPM - %0.1f < PPM < Ref PPM + %0.1f \n
 """ % (
     float(config["thre"]["AUTOMOS"]),
     float(config["thre"]["WER"]),
-    -float(config["thre"]["minppm"]),
+    float(config["thre"]["minppm"]),
     float(config["thre"]["maxppm"]),
 )
 
