@@ -145,6 +145,10 @@ def plot_UV(signal, audio_interv, sr):
 
 def calc_mos(audio_path, id, ref, pre_ppm, fig):
     wav, sr = torchaudio.load(audio_path)
+    if wav.shape[0] != 1:
+        wav = wav[0, :]
+    print(wav.shape)
+    
     osr = 16000
     batch = wav.unsqueeze(0).repeat(10, 1, 1)
     csr = ChangeSampleRate(sr, osr)
@@ -358,7 +362,7 @@ iface = gr.Interface(
 print("Launch examples")
 
 demo = gr.TabbedInterface(
-    [info, iface], tab_names=["Participant Information", "Experiment"]
+    [iface, info], tab_names=["Experiment", "Participant Information"]
 )
 assert config["auth"]["username"] != None
 demo.launch(

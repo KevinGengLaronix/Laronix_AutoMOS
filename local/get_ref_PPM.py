@@ -49,7 +49,7 @@ class ChangeSampleRate(nn.Module):
 
 
 model = lightning_module.BaselineLightningModule.load_from_checkpoint(
-    "epoch=3-step=7459.ckpt"
+    "./src/epoch=3-step=7459.ckpt"
 ).eval()
 
 
