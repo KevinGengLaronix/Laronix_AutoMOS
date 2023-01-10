@@ -212,33 +212,36 @@ def calc_mos(audio_path, id, ref, pre_ppm, fig):
     )
 
 
-# Description
-description = """
-This is the experiment page for Laronix Data Recording.\n
-\n
-1. Select one example from below, a sound file, with its reference transcription and its speaking rate will be loaded as inputs.\n
-    You can check the sound file first and prepare for reading the transcription at a similar tempo.\n
-2. Delete the sound file (click the X button on the right), a recording button will appear.\n
-3. Click the recording button to start, click again to stop. Make sure you are not mispronouncing or including any detectable noises.\n
-4. Click "Submit" button and wait for the result.\n
-5. Please check the message box to see the feedback, if ERROR appears, delete your previous recording and try again :).\n
-6. If "GOOD JOB!" message appears, click "Flag as Perfect" and start another recording.\n
-7. If you try several times (N >= 10) and still can not clear the mission, you can flag your best recording by clicking "Doubtful Speaking Rate" or "Doubtful Naturalness". \n
-    Yet this seldom happens, so please try to meet the system's requirement first!\n
-8. If you have any other question, Please contact kevin@laronix.com \n
+# description = """
+# This is the experiment page for Laronix Data Recording.\n
+# \n
+# 1. Select one example from below, a sound file, with its reference transcription and its speaking rate will be loaded as inputs.\n
+#     You can check the sound file first and prepare for reading the transcription at a similar tempo.\n
+# 2. Delete the sound file (click the X button on the right), a recording button will appear.\n
+# 3. Click the recording button to start, click again to stop. Make sure you are not mispronouncing or including any detectable noises.\n
+# 4. Click "Submit" button and wait for the result.\n
+# 5. Please check the message box to see the feedback, if ERROR appears, delete your previous recording and try again :).\n
+# 6. If "GOOD JOB!" message appears, click "Flag as Perfect" and start another recording.\n
+# 7. If you try several times (N >= 10) and still can not clear the mission, you can flag your best recording by clicking "Doubtful Speaking Rate" or "Doubtful Naturalness". \n
+#     Yet this seldom happens, so please try to meet the system's requirement first!\n
+# 8. If you have any other question, Please contact kevin@laronix.com \n
+# """
+# Requirements: \n
 
-Requirements: \n
+# Predicted MOS >=%0.2f \n
+# WER <= %0.2f \n
+# Pef PPM - %0.1f < PPM < Ref PPM + %0.1f \n
+# """ % (
+#     float(config["thre"]["AUTOMOS"]),
+#     float(config["thre"]["WER"]),
+#     float(config["thre"]["minppm"]),
+#     float(config["thre"]["maxppm"]),
+# )
 
-Predicted MOS >=%0.2f \n
-WER <= %0.2f \n
-Pef PPM - %0.1f < PPM < Ref PPM + %0.1f \n
-""" % (
-    float(config["thre"]["AUTOMOS"]),
-    float(config["thre"]["WER"]),
-    float(config["thre"]["minppm"]),
-    float(config["thre"]["maxppm"]),
-)
-
+with open("src/description.html", "r", encoding="utf-8") as f:
+    description = f.read()
+# description
+    
 
 refs_ppm = np.array(ref_feature[:, -1][1:], dtype="str")
 reference_id = gr.Textbox(
@@ -366,6 +369,6 @@ demo = gr.TabbedInterface(
 )
 assert config["auth"]["username"] != None
 demo.launch(
-    share=True,
+    share=False,
     auth=[(config["auth"]["username"], config["auth"]["password"])],
 )
