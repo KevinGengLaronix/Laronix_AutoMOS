@@ -27,7 +27,6 @@ import sys
 sys.path.append("src")
 import lightning_module
 
-
 # Load automos
 config_yaml = sys.argv[1]
 with open(config_yaml, "r") as f:

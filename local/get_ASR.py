@@ -54,7 +54,7 @@ model = lightning_module.BaselineLightningModule.load_from_checkpoint(
 ).eval()
 
 
-def calc_mos(audio_path, ref):
+def calc_wer(audio_path, ref):
     wav, sr = torchaudio.load(audio_path)
     osr = 16_000
     batch = wav.unsqueeze(0).repeat(10, 1, 1)
@@ -69,27 +69,7 @@ def calc_mos(audio_path, ref):
         truth_transform=transformation,
         hypothesis_transform=transformation,
     )
-    # MOS
-    batch = {
-        "wav": out_wavs,
-        "domains": torch.tensor([0]),
-        "judge_id": torch.tensor([288]),
-    }
-    with torch.no_grad():
-        output = model(batch)
-    predic_mos = output.mean(dim=1).squeeze().detach().numpy() * 2 + 3
-    # Phonemes per minute (PPM)
-    with torch.no_grad():
-        logits = phoneme_model(out_wavs).logits
-    phone_predicted_ids = torch.argmax(logits, dim=-1)
-    phone_transcription = processor.batch_decode(phone_predicted_ids)
-    lst_phonemes = phone_transcription[0].split(" ")
-    wav_vad = torchaudio.functional.vad(wav, sample_rate=sr)
-    ppm = len(lst_phonemes) / (wav_vad.shape[-1] / sr) * 60
-    # if float(predic_mos) >= 3.0:
-    #     torchaudio.save("good.wav", wav,sr)
-
-    return predic_mos, trans, wer, phone_transcription, ppm
+    return trans, wer
 
 if __name__ == "__main__":
     # Argparse
@@ -124,15 +104,7 @@ if __name__ == "__main__":
         help="Generating Config from .txt and wavs/*wav",
     )
 
-    parser.add_argument(
-        "--UV_flag",
-        choices=["True", "False"],
-        default="False",
-        help="Toggle for U/V plot",
-    )
-    parser.add_argument(
-        "--UV_thre", type=float, default=40, help="U/V threshold dB"
-    )
+
     args = parser.parse_args()
 
     refs = np.loadtxt(args.ref_txt, delimiter="\n", dtype="str")
@@ -187,55 +159,24 @@ if __name__ == "__main__":
     )
     # Set up interface
     result = []
-    result.append("id, pred_mos, trans, wer, pred_phone, ppm")
+    result.append("id, trans, wer")
 
-    if args.UV_flag == "False":
-        for id, x, y in track(
-            zip(refs_ids, ref_wavs, refs_txt),
-            total=len(refs_ids),
-            description="Loading references information",
-        ):
-            predic_mos, trans, wer, phone_transcription, ppm = calc_mos(x, y)
-            record = ",".join(
-                [
-                    id,
-                    str(predic_mos),
-                    str(trans),
-                    str(wer),
-                    str(phone_transcription),
-                    str(ppm),
-                ]
-            )
-            result.append(record)
+    
+    for id, x, y in track(
+        zip(refs_ids, ref_wavs, refs_txt),
+        total=len(refs_ids),
+        description="Loading references information",
+    ):
+        trans, wer = calc_wer(x, y)
+        record = ",".join(
+            [
+                id,
+                str(trans),
+                str(wer)
+            ]
+        )
+        result.append(record)
 
-    elif args.UV_flag == "True":
-        fig_tardir = Path(args.ref_wavs) / Path("PPM_figs")
-        Path.mkdir(Path(args.ref_wavs) / Path("PPM_figs"), exist_ok=True)
-
-        for id, x, y in track(
-            zip(refs_ids, ref_wavs, refs_txt),
-            total=len(refs_ids),
-            description="Loading references information",
-        ):
-            # UV ploting
-            wav, sr = torchaudio.load(x)
-            wav_vad = torchaudio.functional.vad(wav, sample_rate=sr)
-            a_h, p_h = get_speech_interval(wav_vad.numpy(), db=args.UV_thre)
-            fig_h = plot_UV(wav_vad.numpy().squeeze(), a_h, sr=sr)
-            fig_h.savefig(Path(fig_tardir) / Path(id + ".png"), dpi=200)
-            # Acoustic calculation
-            predic_mos, trans, wer, phone_transcription, ppm = calc_mos(x, y)
-            record = ",".join(
-                [
-                    id,
-                    str(predic_mos),
-                    str(trans),
-                    str(wer),
-                    str(phone_transcription),
-                    str(ppm),
-                ]
-            )
-            result.append(record)
     # Output
     if args.tag == None:
         args.tag = Path(args.ref_wavs).stem
