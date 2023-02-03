@@ -10,31 +10,21 @@ from datasets import load_dataset
 from datasets import Dataset, Audio
 import pdb
 import string
+import librosa
 # local import
 import sys
 
 sys.path.append("src")
-
+import torch
+torch.cuda.set_device("cuda:0")
 # token_model = AutoModelForCTC.from_pretrained(
 #     "facebook/wav2vec2-base-960h"
 # )
 
-# ds = load_dataset("patrickvonplaten/librispeech_asr_dummy", "clean", split="validation")
-
-audio_path = "/Users/kevingeng/Laronix/Laronix_PAL_ASR_Offline_Plot/data/samples/3_Healthy1.wav"
-
-audio_dir= "/Users/kevingeng/Laronix/laronix_automos/data/Patient_sil_trim_16k_normed_5_snr_40/"
+# audio_dir= "/Users/kevingeng/Laronix/laronix_automos/data/Patient_sil_trim_16k_normed_5_snr_40/"
+# audio_dir ="/home/kevingeng/laronix/laronix_automos/data/Patient_sil_trim_16k_normed_5_snr_40"
+audio_dir ="/home/kevingeng/laronix/laronix_automos/data/Healthy"
 # tgt_audio_dir= "/Users/kevingeng/Laronix/Dataset/Pneumatic/automos"
-
-# src_audio_list = sorted(Path(src_audio_dir).glob("**/*.wav"))
-# src_audio_list = [str(x) for x in src_audio_list]
-# src_audio_dict = {"audio": src_audio_list}
-# src_dataset = Dataset.from_dict(src_audio_dict).cast_column("audio", Audio())
-
-# tgt_audio_list = sorted(Path(tgt_audio_dir).glob("**/*.wav"))
-# tgt_audio_list = [str(x) for x in tgt_audio_list]
-# tgt_audio_dict = {"audio": tgt_audio_list}
-# tgt_dataset = Dataset.from_dict(tgt_audio_dict).cast_column("audio", Audio())
 
 # Get Transcription, WER and PPM 
 """
@@ -64,6 +54,10 @@ from sys import flags
 from random import sample
 from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
 
+import evaluate
+
+wer = evaluate.load("wer")
+
 # root_path = Path(__file__).parents[1]
 
 class ChangeSampleRate(nn.Module):
@@ -86,174 +80,25 @@ class ChangeSampleRate(nn.Module):
         ) + round_up * indices.fmod(1.0).unsqueeze(0)
         return output
 
-
-model = lightning_module.BaselineLightningModule.load_from_checkpoint(
-    "./src/epoch=3-step=7459.ckpt"
-).eval()
-
-
-def calc_wer(audio_path, ref):
-    wav, sr = torchaudio.load(audio_path)
-    osr = 16_000
-    batch = wav.unsqueeze(0).repeat(10, 1, 1)
-    csr = ChangeSampleRate(sr, osr)
-    out_wavs = csr(wav)
-    # ASR
-    trans = p(audio_path)["text"]
-    # WER
-    wer = jiwer.wer(
-        ref,
-        trans,
-        truth_transform=transformation,
-        hypothesis_transform=transformation,
-    )
-    return trans, wer
-
-# if __name__ == "__main__":
-#     # Argparse
-#     parser = argparse.ArgumentParser(
-#         prog="get_ref_PPM",
-#         description="Generate Phoneme per Minute (and Voice/Unvoice plot)",
-#         epilog="",
-#     )
-#     parser.add_argument(
-#         "--tag",
-#         type=str,
-#         default=None,
-#         required=False,
-#         help="ID tag for output *.csv",
-#     )
-
-#     parser.add_argument("--ref_txt", type=str, required=True, help="Reference TXT")
-#     parser.add_argument(
-#         "--ref_wavs", type=str, required=True, help="Reference WAVs"
-#     )
-
-#     parser.add_argument(
-#         "--output_dir",
-#         type=str,
-#         required=True,
-#         help="Output Directory for *.csv",
-#     )
-#     parser.add_argument(
-#         "--to_config",
-#         choices=["True", "False"],
-#         default="False",
-#         help="Generating Config from .txt and wavs/*wav",
-#     )
-
-
-#     args = parser.parse_args()
-
-#     refs = np.loadtxt(args.ref_txt, delimiter="\n", dtype="str")
-#     refs_ids = [x.split()[0] for x in refs]
-#     refs_txt = [" ".join(x.split()[1:]) for x in refs]
-#     ref_wavs = [str(x) for x in sorted(Path(args.ref_wavs).glob("**/*.wav"))]
-#     # pdb.set_trace()
-#     try:
-#         len(refs) == len(ref_wavs)
-#     except ValueError:
-#         print("Error: Text and Wavs don't match")
-#         exit()
-
-#     # ASR part
-#     p = pipeline("automatic-speech-recognition")
-
-#     # WER part
-#     transformation = jiwer.Compose(
-#         [
-#             jiwer.ToLowerCase(),
-#             jiwer.RemoveWhiteSpace(replace_by_space=True),
-#             jiwer.RemoveMultipleSpaces(),
-#             jiwer.ReduceToListOfListOfWords(word_delimiter=" "),
-#         ]
-#     )
-
-#     # WPM part
-#     processor = Wav2Vec2Processor.from_pretrained(
-#         "facebook/wav2vec2-xlsr-53-espeak-cv-ft"
-#     )
-#     phoneme_model = Wav2Vec2ForCTC.from_pretrained(
-#         "facebook/wav2vec2-xlsr-53-espeak-cv-ft"
-#     )
-#     # phoneme_model =  pipeline(model="facebook/wav2vec2-xlsr-53-espeak-cv-ft")
-
-#     description = """
-#     MOS prediction demo using UTMOS-strong w/o phoneme encoder model, \
-#         which is trained on the main track dataset.
-#         This demo only accepts .wav format. Best at 16 kHz sampling rate.
-
-#     Paper is available [here](https://arxiv.org/abs/2204.02152)
-
-#     Add ASR based on wav2vec-960, currently only English available.
-#     Add WER interface.
-#     """
-
-#     referance_id = gr.Textbox(
-#         value="ID", placeholder="Utter ID", label="Reference_ID"
-#     )
-#     referance_textbox = gr.Textbox(
-#         value="", placeholder="Input reference here", label="Reference"
-#     )
-#     # Set up interface
-#     result = []
-#     result.append("id, trans, wer")
-
-    
-#     for id, x, y in track(
-#         zip(refs_ids, ref_wavs, refs_txt),
-#         total=len(refs_ids),
-#         description="Loading references information",
-#     ):
-#         trans, wer = calc_wer(x, y)
-#         record = ",".join(
-#             [
-#                 id,
-#                 str(trans),
-#                 str(wer)
-#             ]
-#         )
-#         result.append(record)
-
-#     # Output
-#     if args.tag == None:
-#         args.tag = Path(args.ref_wavs).stem
-#     # Make output_dir
-#     # pdb.set_trace()
-#     Path.mkdir(Path(args.output_dir), exist_ok=True)
-#     # pdb.set_trace()
-#     with open("%s/%s.csv" % (args.output_dir, args.tag), "w") as f:
-#         print("\n".join(result), file=f)
-
-#     # Generating config
-#     if args.to_config == "True":
-#         config_dict = {
-#             "exp_id": args.tag,
-#             "ref_txt": args.ref_txt,
-#             "ref_feature": "%s/%s.csv" % (args.output_dir, args.tag),
-#             "ref_wavs": args.ref_wavs,
-#             "thre": {
-#                 "minppm": 100,
-#                 "maxppm": 100,
-#                 "WER": 0.1,
-#                 "AUTOMOS": 4.0,
-#             },
-#             "auth": {"username": None, "password": None},
-#         }
-#         with open("./config/%s.yaml" % args.tag, "w") as config_f:
-#             rprint("Dumping as config ./config/%s.yaml" % args.tag)
-#             rprint(config_dict)
-#             yaml.dump(config_dict, stream=config_f)
-#             rprint("Change parameter ./config/%s.yaml if necessary" % args.tag)
-#     print("Reference Dumping Finished")
+# resample and clean text data
 def dataclean(example):
-    return {"transcription": example["transcription"].upper().translate(str.maketrans('', '', string.punctuation))}
+    # pdb.set_trace()
+    if example['audio']['sampling_rate'] != 16000:
+        resampled_audio = librosa.resample(y=example['audio']['array'],
+                                     orig_sr= example['audio']['sampling_rate'],
+                                     target_sr=16000)
+        # torchaudio.transforms.Resample(example['audio']['sampling_rate'], 16000)
+        # resampled_audio = resampler(example['audio']['array'])
+
+        return {"audio": {"path": example['audio']['path'], "array": resampled_audio, "sampling_rate": 16000},
+                "transcription": example["transcription"].upper().translate(str.maketrans('', '', string.punctuation))}
+    else:
+        return {"transcription": example["transcription"].upper().translate(str.maketrans('', '', string.punctuation))}
 
 # processor = AutoFeatureExtractor.from_pretrained(
 #     "facebook/wav2vec2-base-960h"
 # )
 processor = AutoProcessor.from_pretrained("facebook/wav2vec2-base")
-
 def prepare_dataset(batch):
     audio = batch["audio"]
     batch = processor(audio["array"], sampling_rate = audio["sampling_rate"], text=batch['transcription'])
@@ -261,6 +106,7 @@ def prepare_dataset(batch):
     return batch
 
 src_dataset = load_dataset("audiofolder", data_dir=audio_dir, split="train")
+# pdb.set_trace()
 src_dataset = src_dataset.map(dataclean)
 # train_dev / test
 ds = src_dataset.train_test_split(test_size=0.1)
@@ -276,6 +122,9 @@ dev = train_dev['test']
     # pdb.set_trace()
 import numpy as np
 
+WER = evaluate.load("wer")
+
+import pdb
 
 def compute_metrics(pred):
     pred_logits = pred.predictions
@@ -285,19 +134,22 @@ def compute_metrics(pred):
 
     pred_str = processor.batch_decode(pred_ids)
     label_str = processor.batch_decode(pred.label_ids, group_tokens=False)
-
-    wer = wer.compute(predictions=pred_str, references=label_str)
+    pdb.set_trace()
+    wer = WER.compute(predictions=pred_str, references=label_str)
 
     return {"wer": wer}
 
 
-pdb.set_trace()
+# pdb.set_trace()
 # TOKENLIZER("data/samples/5_Laronix1.wav")
 # pdb.set_trace()
 # tokenizer 
+
 tokenizer = AutoTokenizer.from_pretrained("facebook/wav2vec2-base-960h")
 
 encoded_train = train.map(prepare_dataset, num_proc=4)
+encoded_dev = dev.map(prepare_dataset, num_proc=4)
+encoded_test = test.map(prepare_dataset, num_proc=4)
 
 from transformers import AutoModelForCTC, TrainingArguments, Trainer
 
@@ -306,41 +158,75 @@ model = AutoModelForCTC.from_pretrained(
     ctc_loss_reduction="mean",
     pad_token_id=processor.tokenizer.pad_token_id,
 )
-pdb.set_trace()
+
+import torch
+
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Union
+
+# data_collator
+@dataclass
+class DataCollatorCTCWithPadding:
+
+    processor: AutoProcessor
+    padding: Union[bool, str] = "longest"
+
+    def __call__(self, features: List[Dict[str, Union[List[int], torch.Tensor]]]) -> Dict[str, torch.Tensor]:
+        # split inputs and labels since they have to be of different lengths and need
+        # different padding methods
+        input_features = [{"input_values": feature["input_values"][0]} for feature in features]
+        label_features = [{"input_ids": feature["labels"]} for feature in features]
+
+        batch = self.processor.pad(input_features, padding=self.padding, return_tensors="pt")
+
+        labels_batch = self.processor.pad(labels=label_features, padding=self.padding, return_tensors="pt")
+
+        # replace padding with -100 to ignore loss correctly
+        labels = labels_batch["input_ids"].masked_fill(labels_batch.attention_mask.ne(1), -100)
+
+        batch["labels"] = labels
+
+        return batch
+
+data_collator = DataCollatorCTCWithPadding(processor=processor, padding="longest")
 
 training_args = TrainingArguments(
-    output_dir="my_awesome_asr_mind_model",
-    per_device_train_batch_size=8,
+    output_dir="Healthy_128_training",
+    per_device_train_batch_size=16,
     gradient_accumulation_steps=2,
     learning_rate=1e-5,
-    warmup_steps=500,
+    warmup_steps=0,
     max_steps=2000,
     gradient_checkpointing=True,
     fp16=True,
     group_by_length=True,
     evaluation_strategy="steps",
-    per_device_eval_batch_size=8,
-    save_steps=1000,
-    eval_steps=1000,
+    per_device_eval_batch_size=16,
+    save_steps=200,
+    eval_steps=1,
     logging_steps=25,
     load_best_model_at_end=True,
     metric_for_best_model="wer",
     greater_is_better=False,
-    push_to_hub=True,
+    push_to_hub=False,
 )
 
-pdb.set_trace()
+# pdb.set_trace() 
+
 trainer = Trainer(
     model=model,
     args=training_args,
-    train_dataset=encoded_train["train"],
-    eval_dataset=encoded_train["test"],
+    train_dataset=encoded_train,
+    eval_dataset=encoded_dev,
     tokenizer=processor.feature_extractor,
+    data_collator=data_collator,
     compute_metrics=compute_metrics,
 )
-pdb.set_trace()
+
+# pdb.set_trace()
     # data_collator=data_collator,
 
+# Training
 trainer.train()
-# x = tokenizer(test['transcription'][0])
+
 

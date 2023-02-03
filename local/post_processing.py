@@ -26,11 +26,13 @@ outdir = indir/Path("output")
 # outdir_clean = indir/Path("output_clean")
 Path.mkdir(outdir, exist_ok=True)
 # Path.mkdir(outdir_clean, exist_ok=True)
+# stem = Path(indir).stem
 for i, j in zip(x["Audio_to_evaluate"], x["Reference_ID"]):
+    # pdb.set_trace()
     y, sr = librosa.load(i, sr=48000)
     # kevin 1017 John's trial with original data.
     y_ = librosa.util.normalize(y, norm=5)
     y_cut, index = librosa.effects.trim(y_, top_db=30)
     # normalized and cut
-    sf.write(outdir/Path(str(indir)+"_"+ j +".wav"), y_cut, samplerate=sr)
+    sf.write(outdir/Path(j +".wav"), y_cut, samplerate=sr)
     
