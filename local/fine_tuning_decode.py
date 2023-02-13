@@ -23,6 +23,8 @@ torch.cuda.set_device("cuda:0")
 
 # audio_dir= "/Users/kevingeng/Laronix/laronix_automos/data/Patient_sil_trim_16k_normed_5_snr_40/"
 audio_dir ="/home/kevingeng/laronix/laronix_automos/data/Patient_sil_trim_16k_normed_5_snr_40"
+healthy_dir="/home/kevingeng/laronix/laronix_automos/data/Healthy"
+Fary_PAL_30="/home/kevingeng/laronix/laronix_automos/data/Fary_PAL_p326_20230110_30"
 # audio_dir ="/home/kevingeng/laronix/laronix_automos/data/Healthy"
 # tgt_audio_dir= "/Users/kevingeng/Laronix/Dataset/Pneumatic/automos"
 
@@ -107,8 +109,15 @@ def prepare_dataset(batch):
     return batch
 
 src_dataset = load_dataset("audiofolder", data_dir=audio_dir, split="train")
-# pdb.set_trace()
 src_dataset = src_dataset.map(dataclean)
+
+healthy_test_dataset = load_dataset("audiofolder", data_dir=healthy_dir, split='train')
+healthy_test_dataset = healthy_test_dataset.map(dataclean)
+
+Fary_PAL_test_dataset = load_dataset("audiofolder", data_dir=Fary_PAL_30, split='train')
+Fary_PAL_test_dataset = Fary_PAL_test_dataset.map(dataclean)
+pdb.set_trace()
+
 # train_dev / test
 ds = src_dataset.train_test_split(test_size=0.1, seed=1)
 
@@ -120,57 +129,18 @@ train = train_dev['train']
 test = ds['test']
 dev = train_dev['test']
 
+encoded_train = train.map(prepare_dataset, num_proc=4)
+encoded_dev = dev.map(prepare_dataset, num_proc=4)
+encoded_test = test.map(prepare_dataset, num_proc=4)
+
+encoded_healthy = healthy_test_dataset.map(prepare_dataset, num_proc=4)
+encoded_Fary = Fary_PAL_test_dataset.map(prepare_dataset, num_proc=4)
     # pdb.set_trace()
 import numpy as np
 
 WER = evaluate.load("wer")
 
 import pdb
-
-def compute_metrics(pred):
-    # pdb.set_trace()
-    pred_logits = pred.predictions
-    pred_ids = np.argmax(pred_logits, axis=-1)
-
-    pred.label_ids[pred.label_ids == -100] = processor.tokenizer.pad_token_id
-
-    pred_str = processor.batch_decode(pred_ids)
-    label_str = processor.batch_decode(pred.label_ids, group_tokens=False)
-    # pdb.set_trace()
-    wer = WER.compute(predictions=pred_str, references=label_str)
-
-    return {"wer": wer}
-
-
-# pdb.set_trace()
-# TOKENLIZER("data/samples/5_Laronix1.wav")
-# pdb.set_trace()
-# tokenizer 
-
-tokenizer = AutoTokenizer.from_pretrained("facebook/wav2vec2-base-960h")
-tokenizer.push_to_hub("PAL_John_128_train_dev_test_seed_1")
-pdb.set_trace()
-
-encoded_train = train.map(prepare_dataset, num_proc=4)
-encoded_dev = dev.map(prepare_dataset, num_proc=4)
-encoded_test = test.map(prepare_dataset, num_proc=4)
-
-from transformers import AutoModelForCTC, TrainingArguments, Trainer
-
-model = AutoModelForCTC.from_pretrained(
-    "facebook/wav2vec2-base-960h",
-    ctc_loss_reduction="mean",
-    pad_token_id=processor.tokenizer.pad_token_id,
-)
-
-fine_tuned_model = AutoModelForCTC.from_pretrained(
-    "PAL_John_128_train_dev_test_seed_1"
-)
-pdb.set_trace()
-
-
-import torch
-
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
@@ -200,10 +170,37 @@ class DataCollatorCTCWithPadding:
 
 data_collator = DataCollatorCTCWithPadding(processor=processor, padding="longest")
 
-# pdb.set_trace()
+def compute_metrics(pred):
+    # pdb.set_trace()
+    pred_logits = pred.predictions
+    pred_ids = np.argmax(pred_logits, axis=-1)
 
-training_args = TrainingArguments(
-    output_dir="./fine_tuned/PAL_John_128_train_dev_test_seed_1",
+    pred.label_ids[pred.label_ids == -100] = processor.tokenizer.pad_token_id
+
+    pred_str = processor.batch_decode(pred_ids)
+    label_str = processor.batch_decode(pred.label_ids, group_tokens=False)
+    # pdb.set_trace()
+    wer = WER.compute(predictions=pred_str, references=label_str)
+
+    return {"wer": wer}
+
+tokenizer = AutoTokenizer.from_pretrained("facebook/wav2vec2-base-960h")
+
+from transformers import AutoModelForCTC, TrainingArguments, Trainer
+
+model = AutoModelForCTC.from_pretrained(
+    "facebook/wav2vec2-base-960h",
+    ctc_loss_reduction="mean",
+    pad_token_id=processor.tokenizer.pad_token_id,
+)
+
+fine_tuned_model = AutoModelForCTC.from_pretrained(
+    "PAL_John_128_train_dev_test_seed_1"
+)
+
+testing_args = TrainingArguments(
+    output_dir="PAL_John_128_train_dev_test_seed_1",
+    do_eval=True,
     per_device_train_batch_size=8,
     gradient_accumulation_steps=2,
     learning_rate=1e-5,
@@ -220,23 +217,35 @@ training_args = TrainingArguments(
     load_best_model_at_end=True,
     metric_for_best_model="wer",
     greater_is_better=False,
-    push_to_hub=True,
+    push_to_hub=False,
 )
 
-# pdb.set_trace() 
-
-trainer = Trainer(
+ori_trainer = Trainer(
     model=model,
-    args=training_args,
-    train_dataset=encoded_train,
-    eval_dataset=encoded_dev,
+    args=testing_args,
     tokenizer=processor.feature_extractor,
-    data_collator=data_collator,
     compute_metrics=compute_metrics,
+    data_collator=data_collator
 )
 
-# Training
-trainer.train()
+fine_tuned_trainer = Trainer(
+    model=fine_tuned_model,
+    args=testing_args,
+    tokenizer=processor.feature_extractor,
+    compute_metrics=compute_metrics,
+    data_collator=data_collator
+)
 
-# evaluation
-trainer.predict(test_dataset=encoded_test)
+x = ori_trainer.predict(encoded_test)
+# {'eval_loss': 2.157982349395752, 'eval_wer': 0.8491620111731844, 'eval_runtime': 0.3919, 'eval_samples_per_second': 40.824, 'eval_steps_per_second': 5.103}
+x_hel = ori_trainer.predict(encoded_healthy)
+# {'eval_loss': 1.6561158895492554, 'eval_wer': 0.19925971622455274, 'eval_runtime': 3.7416, 'eval_samples_per_second': 42.762, 'eval_steps_per_second': 5.345}
+x_fary = ori_trainer.predict(encoded_Fary)
+# {'eval_loss': 1.8639644384384155, 'eval_wer': 0.43781094527363185, 'eval_runtime': 0.6672, 'eval_samples_per_second': 44.964, 'eval_steps_per_second': 5.995}
+y = fine_tuned_trainer.predict(encoded_test)
+# {'eval_loss': 0.6034298539161682, 'eval_wer': 0.2011173184357542, 'eval_runtime': 0.3675, 'eval_samples_per_second': 43.541, 'eval_steps_per_second': 5.443}
+y_hel = fine_tuned_trainer.predict(encoded_healthy)
+# {'eval_loss': 1.7949535846710205, 'eval_wer': 0.1566933991363356, 'eval_runtime': 3.665, 'eval_samples_per_second': 43.656, 'eval_steps_per_second': 5.457}
+y_fary = fine_tuned_trainer.predict(encoded_Fary)
+# {'eval_loss': 1.7337630987167358, 'eval_wer': 0.5472636815920398, 'eval_runtime': 0.6353, 'eval_samples_per_second': 47.219, 'eval_steps_per_second': 6.296}
+pdb.set_trace()

@@ -99,5 +99,6 @@ tensorboardX
 jiwer
 phonemizer
 librosa
+datasets
 
 rich

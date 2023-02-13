@@ -368,6 +368,6 @@ demo = gr.TabbedInterface(
 )
 assert config["auth"]["username"] != None
 demo.launch(
-    share=False,
+    share=True,
     auth=[(config["auth"]["username"], config["auth"]["password"])],
 )
