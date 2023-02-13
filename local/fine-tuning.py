@@ -82,7 +82,7 @@ class ChangeSampleRate(nn.Module):
 
 # resample and clean text data
 def dataclean(example):
-    # pdb.set_trace()
+    
     if example['audio']['sampling_rate'] != 16000:
         resampled_audio = librosa.resample(y=example['audio']['array'],
                                      orig_sr= example['audio']['sampling_rate'],
@@ -93,7 +93,8 @@ def dataclean(example):
         return {"audio": {"path": example['audio']['path'], "array": resampled_audio, "sampling_rate": 16000},
                 "transcription": example["transcription"].upper().translate(str.maketrans('', '', string.punctuation))}
     else:
-        return {"transcription": example["transcription"].upper().translate(str.maketrans('', '', string.punctuation))}
+        return {"audio": {"path": example["audio"]["path"], "array": example['audio']['array'], "sampling_rate": 16000},
+                "transcription": example["transcription"].upper().translate(str.maketrans('', '', string.punctuation))}
 
 # processor = AutoFeatureExtractor.from_pretrained(
 #     "facebook/wav2vec2-base-960h"
@@ -107,11 +108,10 @@ def prepare_dataset(batch):
     return batch
 
 src_dataset = load_dataset("audiofolder", data_dir=audio_dir, split="train")
-# pdb.set_trace()
 src_dataset = src_dataset.map(dataclean)
 # train_dev / test
 ds = src_dataset.train_test_split(test_size=0.1, seed=1)
-
+# pdb.set_trace()
 train_dev = ds['train']
 # train / dev
 train_dev = train_dev.train_test_split(test_size=int(len(src_dataset)*0.1), seed=1)
@@ -120,7 +120,7 @@ train = train_dev['train']
 test = ds['test']
 dev = train_dev['test']
 
-    # pdb.set_trace()
+# pdb.set_trace()
 import numpy as np
 
 WER = evaluate.load("wer")
@@ -154,6 +154,7 @@ pdb.set_trace()
 encoded_train = train.map(prepare_dataset, num_proc=4)
 encoded_dev = dev.map(prepare_dataset, num_proc=4)
 encoded_test = test.map(prepare_dataset, num_proc=4)
+pdb.set_trace()
 
 from transformers import AutoModelForCTC, TrainingArguments, Trainer
 
