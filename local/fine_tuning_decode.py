@@ -26,6 +26,7 @@ audio_dir ="/home/kevingeng/laronix/laronix_automos/data/Patient_sil_trim_16k_no
 healthy_dir="/home/kevingeng/laronix/laronix_automos/data/Healthy"
 Fary_PAL_30="/home/kevingeng/laronix/laronix_automos/data/Fary_PAL_p326_20230110_30"
 John_p326 = "/home/kevingeng/laronix/laronix_automos/data/John_p326/output"
+John_video = "/home/kevingeng/laronix/laronix_automos/data/20230103_video"
 # audio_dir ="/home/kevingeng/laronix/laronix_automos/data/Healthy"
 # tgt_audio_dir= "/Users/kevingeng/Laronix/Dataset/Pneumatic/automos"
 
@@ -120,6 +121,9 @@ Fary_PAL_test_dataset = Fary_PAL_test_dataset.map(dataclean)
 
 John_p326_test_dataset = load_dataset("audiofolder", data_dir=John_p326, split='train')
 John_p326_test_dataset = John_p326_test_dataset.map(dataclean)
+
+John_video_test_dataset = load_dataset("audiofolder", data_dir=John_video, split='train')
+John_video_test_dataset = John_video_test_dataset.map(dataclean)
 pdb.set_trace()
 
 # train_dev / test
@@ -140,7 +144,7 @@ encoded_test = test.map(prepare_dataset, num_proc=4)
 encoded_healthy = healthy_test_dataset.map(prepare_dataset, num_proc=4)
 encoded_Fary = Fary_PAL_test_dataset.map(prepare_dataset, num_proc=4)
 encoded_John_p326 = John_p326_test_dataset.map(prepare_dataset, num_proc=4)
-
+encoded_John_video = John_video_test_dataset.map(prepare_dataset, num_proc=4)
     # pdb.set_trace()
 import numpy as np
 
@@ -185,7 +189,7 @@ def compute_metrics(pred):
 
     pred_str = processor.batch_decode(pred_ids)
     label_str = processor.batch_decode(pred.label_ids, group_tokens=False)
-    # pdb.set_trace()
+    pdb.set_trace()
     wer = WER.compute(predictions=pred_str, references=label_str)
 
     return {"wer": wer}
@@ -250,6 +254,9 @@ x_fary = ori_trainer.predict(encoded_Fary)
 # {'eval_loss': 1.8639644384384155, 'eval_wer': 0.43781094527363185, 'eval_runtime': 0.6672, 'eval_samples_per_second': 44.964, 'eval_steps_per_second': 5.995}
 x_John_p326 = ori_trainer.predict(encoded_John_p326)
 # metrics={'test_loss': 2.5775339603424072, 'test_wer': 0.8819095477386935, 'test_runtime': 0.7077, 'test_samples_per_second': 52.279, 'test_steps_per_second': 7.065})
+x_John_video= ori_trainer.predict(encoded_John_video)
+
+
 y = fine_tuned_trainer.predict(encoded_test)
 # {'eval_loss': 0.6034298539161682, 'eval_wer': 0.2011173184357542, 'eval_runtime': 0.3675, 'eval_samples_per_second': 43.541, 'eval_steps_per_second': 5.443}
 y_hel = fine_tuned_trainer.predict(encoded_healthy)
@@ -258,4 +265,5 @@ y_fary = fine_tuned_trainer.predict(encoded_Fary)
 # {'eval_loss': 1.7337630987167358, 'eval_wer': 0.5472636815920398, 'eval_runtime': 0.6353, 'eval_samples_per_second': 47.219, 'eval_steps_per_second': 6.296}
 y_John_p326 = fine_tuned_trainer.predict(encoded_John_p326)
 # metrics={'test_loss': 1.3678617477416992, 'test_wer': 0.4396984924623116, 'test_runtime': 0.7016, 'test_samples_per_second': 52.734, 'test_steps_per_second': 7.126})
+y_John_video= fine_tuned_trainer.predict(encoded_John_video)
 pdb.set_trace()
