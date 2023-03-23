@@ -124,10 +124,12 @@ John_p326_test_dataset = John_p326_test_dataset.map(dataclean)
 
 John_video_test_dataset = load_dataset("audiofolder", data_dir=John_video, split='train')
 John_video_test_dataset = John_video_test_dataset.map(dataclean)
-pdb.set_trace()
+# pdb.set_trace()
 
 # train_dev / test
 ds = src_dataset.train_test_split(test_size=0.1, seed=1)
+
+dataset_libri = load_dataset("hf-internal-testing/librispeech_asr_dummy", "clean", split="validation")
 
 train_dev = ds['train']
 # train / dev
@@ -193,7 +195,7 @@ def compute_metrics(pred):
 
     return {"wer": wer}
 
-tokenizer = AutoTokenizer.from_pretrained("facebook/wav2vec2-base-960h")
+# tokenizer = AutoTokenizer.from_pretrained("facebook/wav2vec2-base-960h")
 
 from transformers import AutoModelForCTC, TrainingArguments, Trainer
 
@@ -206,6 +208,40 @@ model = AutoModelForCTC.from_pretrained(
 fine_tuned_model = AutoModelForCTC.from_pretrained(
     "./fine_tuned/PAL_John_128_p326_300_train_dev_test_seed_1"
 )
+
+## Whisper decoding
+
+from transformers import WhisperProcessor, WhisperForConditionalGeneration
+whisper_processor = WhisperProcessor.from_pretrained("openai/whisper-tiny")
+whisper_model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-tiny").to("cuda:0")
+
+# whisper_pipe = pipeline(
+#   "automatic-speech-recognition",
+#   model="openai/whisper-small",
+#   chunk_length_s=30,
+#   device="cuda:0",
+# )
+# import pdb
+# pdb.set_trace()
+
+def my_map_to_pred(batch):
+    # pdb.set_trace()
+    audio = batch["audio"]
+    input_features = whisper_processor(audio["array"], sampling_rate=audio["sampling_rate"], return_tensors="pt").input_features
+    # batch["reference"] = whisper_processor.tokenizer._normalize(batch['text'])
+    batch["reference"] = whisper_processor.tokenizer._normalize(batch['transcription'])
+
+    with torch.no_grad():
+        # predicted_ids = whisper_model.generate(input_features.to("cuda"))[0]
+        predicted_ids = whisper_model.generate(input_features.to("cuda"))[0]
+    transcription = whisper_processor.decode(predicted_ids)
+    batch["prediction"] = whisper_processor.tokenizer._normalize(transcription)
+    return batch
+# result = dataset_libri.map(my_map_to_pred)
+# pdb.set_trace()
+# x = encoded_healthy.map(my_map_to_pred)
+# pdb.set_trace()
+
 
 testing_args = TrainingArguments(
     output_dir="./fine_tuned/PAL_John_128_p326_300_train_dev_test_seed_1",
@@ -245,28 +281,54 @@ fine_tuned_trainer = Trainer(
     data_collator=data_collator
 )
 
-x = ori_trainer.predict(encoded_test)
-# {'eval_loss': 2.157982349395752, 'eval_wer': 0.8491620111731844, 'eval_runtime': 0.3919, 'eval_samples_per_second': 40.824, 'eval_steps_per_second': 5.103}
-x_hel = ori_trainer.predict(encoded_healthy)
-# {'eval_loss': 1.6561158895492554, 'eval_wer': 0.19925971622455274, 'eval_runtime': 3.7416, 'eval_samples_per_second': 42.762, 'eval_steps_per_second': 5.345}
-x_fary = ori_trainer.predict(encoded_Fary)
-# {'eval_loss': 1.8639644384384155, 'eval_wer': 0.43781094527363185, 'eval_runtime': 0.6672, 'eval_samples_per_second': 44.964, 'eval_steps_per_second': 5.995}
-x_John_p326 = ori_trainer.predict(encoded_John_p326)
-# metrics={'test_loss': 2.5775339603424072, 'test_wer': 0.8819095477386935, 'test_runtime': 0.7077, 'test_samples_per_second': 52.279, 'test_steps_per_second': 7.065})
-x_John_video= ori_trainer.predict(encoded_John_video)
+# whisper_trainer = Trainer(
+#     model=whisper_model,
+#     tokenizer=whisper_processor.feature_extractor
+# )
+
+# x = ori_trainer.predict(encoded_test)
+# # {'eval_loss': 2.157982349395752, 'eval_wer': 0.8491620111731844, 'eval_runtime': 0.3919, 'eval_samples_per_second': 40.824, 'eval_steps_per_second': 5.103}
+# x_hel = ori_trainer.predict(encoded_healthy)
+# # {'eval_loss': 1.6561158895492554, 'eval_wer': 0.19925971622455274, 'eval_runtime': 3.7416, 'eval_samples_per_second': 42.762, 'eval_steps_per_second': 5.345}
+# x_fary = ori_trainer.predict(encoded_Fary)
+# # {'eval_loss': 1.8639644384384155, 'eval_wer': 0.43781094527363185, 'eval_runtime': 0.6672, 'eval_samples_per_second': 44.964, 'eval_steps_per_second': 5.995}
+# x_John_p326 = ori_trainer.predict(encoded_John_p326)
+# # metrics={'test_loss': 2.5775339603424072, 'test_wer': 0.8819095477386935, 'test_runtime': 0.7077, 'test_samples_per_second': 52.279, 'test_steps_per_second': 7.065})
+# x_John_video= ori_trainer.predict(encoded_John_video)
 
 
-y = fine_tuned_trainer.predict(encoded_test)
-# {'eval_loss': 0.6034298539161682, 'eval_wer': 0.2011173184357542, 'eval_runtime': 0.3675, 'eval_samples_per_second': 43.541, 'eval_steps_per_second': 5.443}
-y_hel = fine_tuned_trainer.predict(encoded_healthy)
-# {'eval_loss': 1.7949535846710205, 'eval_wer': 0.1566933991363356, 'eval_runtime': 3.665, 'eval_samples_per_second': 43.656, 'eval_steps_per_second': 5.457}
-y_fary = fine_tuned_trainer.predict(encoded_Fary)
-# {'eval_loss': 1.7337630987167358, 'eval_wer': 0.5472636815920398, 'eval_runtime': 0.6353, 'eval_samples_per_second': 47.219, 'eval_steps_per_second': 6.296}
-y_John_p326 = fine_tuned_trainer.predict(encoded_John_p326)
-# metrics={'test_loss': 1.3678617477416992, 'test_wer': 0.4396984924623116, 'test_runtime': 0.7016, 'test_samples_per_second': 52.734, 'test_steps_per_second': 7.126})
+# y = fine_tuned_trainer.predict(encoded_test)
+# # {'eval_loss': 0.6034298539161682, 'eval_wer': 0.2011173184357542, 'eval_runtime': 0.3675, 'eval_samples_per_second': 43.541, 'eval_steps_per_second': 5.443}
+# y_hel = fine_tuned_trainer.predict(encoded_healthy)
+# # {'eval_loss': 1.7949535846710205, 'eval_wer': 0.1566933991363356, 'eval_runtime': 3.665, 'eval_samples_per_second': 43.656, 'eval_steps_per_second': 5.457}
+# y_fary = fine_tuned_trainer.predict(encoded_Fary)
+# # {'eval_loss': 1.7337630987167358, 'eval_wer': 0.5472636815920398, 'eval_runtime': 0.6353, 'eval_samples_per_second': 47.219, 'eval_steps_per_second': 6.296}
+# y_John_p326 = fine_tuned_trainer.predict(encoded_John_p326)
+# # metrics={'test_loss': 1.3678617477416992, 'test_wer': 0.4396984924623116, 'test_runtime': 0.7016, 'test_samples_per_second': 52.734, 'test_steps_per_second': 7.126})
+
+## Not fine tuned
+z_result = encoded_test.map(my_map_to_pred)
+# pdb.set_trace()
+# 0.4692737430167598
+z = WER.compute(references=z_result['reference'], predictions=z_result['prediction'])
+
+z_hel_result = encoded_healthy.map(my_map_to_pred)
+# 
+z_hel = WER.compute(references=z_hel_result['reference'], predictions=z_hel_result['prediction'])
+# 0.1591610117211598
+
+z_fary_result = encoded_Fary.map(my_map_to_pred)
+z_far = WER.compute(references=z_fary_result['reference'], predictions=z_fary_result['prediction'])
+# 0.1791044776119403
 
 
-y_John_video= fine_tuned_trainer.predict(encoded_John_video)
+z_john_p326_result = encoded_John_p326.map(my_map_to_pred)
+z_john_p326 = WER.compute(references=z_john_p326_result['reference'], predictions=z_john_p326_result['prediction'])
+# 0.4648241206030151
+
+
+
+# y_John_video= fine_tuned_trainer.predict(encoded_John_video)
 # metrics={'test_loss': 2.665189743041992, 'test_wer': 0.7222222222222222, 'test_runtime': 0.1633, 'test_samples_per_second': 48.979, 'test_steps_per_second': 6.122})
 pdb.set_trace()
 

@@ -20,17 +20,14 @@ import librosa
 import librosa.display
 import matplotlib.pyplot as plt
 
-
 # local import
 import sys
-
 sys.path.append("src")
 import lightning_module
 
 # Load automos
 config_yaml = sys.argv[1]
 with open(config_yaml, "r") as f:
-    # pdb.set_trace()
     try:
         config = yaml.safe_load(f)
     except FileExistsError:
@@ -262,7 +259,6 @@ print("Preparing Examples")
 examples = [
     [w, i, x, y] for w, i, x, y in zip(ref_wavs, refs_ids, refs_txt, refs_ppm)
 ]
-
 # Interface
 # Participant Information
 def record_part_info(name, gender, first_lng):

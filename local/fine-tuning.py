@@ -111,7 +111,7 @@ def prepare_dataset(batch):
 src_dataset = load_dataset("audiofolder", data_dir=audio_dir, split="train")
 src_dataset = src_dataset.map(dataclean)
 p326_300_dataset = load_dataset("audiofolder", data_dir=p326_300_dir, split="train")
-p326_300_dataset = p326_300_dir.map(dataclean)
+p326_300_dataset = p326_300_dataset.map(dataclean)
 # train_dev / test
 ds = src_dataset.train_test_split(test_size=0.1, seed=1)
 # pdb.set_trace()
@@ -151,8 +151,8 @@ def compute_metrics(pred):
 # tokenizer 
 
 tokenizer = AutoTokenizer.from_pretrained("facebook/wav2vec2-base-960h")
-tokenizer.push_to_hub("PAL_John_128_train_dev_test_seed_1")
-# pdb.set_trace()
+tokenizer.push_to_hub("KevinGeng/PAL_John_128_p326_300_train_dev_test_seed_1")
+pdb.set_trace()
 
 encoded_train = train.map(prepare_dataset, num_proc=4)
 encoded_dev = dev.map(prepare_dataset, num_proc=4)
@@ -211,7 +211,7 @@ data_collator = DataCollatorCTCWithPadding(processor=processor, padding="longest
 # pdb.set_trace()
 
 training_args = TrainingArguments(
-    output_dir="./fine_tuned/PAL_John_128+p326_300_train_dev_test_seed_1",
+    output_dir="./fine_tuned/PAL_John_128_p326_300_train_dev_test_seed_1",
     per_device_train_batch_size=8,
     gradient_accumulation_steps=2,
     learning_rate=1e-5,
@@ -228,7 +228,7 @@ training_args = TrainingArguments(
     load_best_model_at_end=True,
     metric_for_best_model="wer",
     greater_is_better=False,
-    push_to_hub=False,
+    push_to_hub=True,
 )
 
 # pdb.set_trace() 
