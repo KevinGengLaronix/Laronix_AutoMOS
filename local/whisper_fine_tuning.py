@@ -1,3 +1,4 @@
+fine_tuning_dir = "fine_tuned/whipser_medium_en_PAL300_step25"
 """
 TODO:
     + [x] Load Configuration
@@ -6,7 +7,7 @@ TODO:
 """
 from pathlib import Path
 from transformers import AutoTokenizer, AutoFeatureExtractor, AutoModelForCTC, AutoProcessor
-from datasets import load_dataset
+from datasets import load_dataset, concatenate_datasets
 from datasets import Dataset, Audio
 import pdb
 import string
@@ -27,6 +28,7 @@ healthy_dir="./data/Healthy"
 Fary_PAL_30="./data/Fary_PAL_p326_20230110_30"
 John_p326 = "./data/John_p326/output"
 John_video = "./data/20230103_video"
+p326_300_dir ="./data/John_p326_large"
 # audio_dir ="/home/kevingeng/laronix/laronix_automos/data/Healthy"
 # tgt_audio_dir= "/Users/kevingeng/Laronix/Dataset/Pneumatic/automos"
 
@@ -112,6 +114,9 @@ def prepare_dataset(batch):
 
 src_dataset = load_dataset("audiofolder", data_dir=audio_dir, split="train")
 src_dataset = src_dataset.map(dataclean)
+p326_300_dataset = load_dataset("audiofolder", data_dir=p326_300_dir, split="train")
+p326_300_dataset = p326_300_dataset.map(dataclean)
+
 
 healthy_test_dataset = load_dataset("audiofolder", data_dir=healthy_dir, split='train')
 healthy_test_dataset = healthy_test_dataset.map(dataclean)
@@ -139,15 +144,20 @@ train = train_dev['train']
 test = ds['test']
 dev = train_dev['test']
 
-# encoded_train = train.map(prepare_dataset, num_proc=4)
-# encoded_dev = dev.map(prepare_dataset, num_proc=4)
-# encoded_test = test.map(prepare_dataset, num_proc=4)
+encoded_train = train.map(prepare_dataset, num_proc=4)
+encoded_dev = dev.map(prepare_dataset, num_proc=4)
+encoded_test = test.map(prepare_dataset, num_proc=4)
+p326_encoded_train = p326_300_dataset.map(prepare_dataset, num_proc=4)
 
-# encoded_healthy = healthy_test_dataset.map(prepare_dataset, num_proc=4)
-# encoded_Fary = Fary_PAL_test_dataset.map(prepare_dataset, num_proc=4)
-# encoded_John_p326 = John_p326_test_dataset.map(prepare_dataset, num_proc=4)
-# encoded_John_video = John_video_test_dataset.map(prepare_dataset, num_proc=4)
-    # pdb.set_trace()
+# combine large p326 in to training set
+encoded_train = concatenate_datasets([encoded_train, p326_encoded_train])
+
+encoded_healthy = healthy_test_dataset.map(prepare_dataset, num_proc=4)
+encoded_Fary = Fary_PAL_test_dataset.map(prepare_dataset, num_proc=4)
+encoded_John_p326 = John_p326_test_dataset.map(prepare_dataset, num_proc=4)
+encoded_John_video = John_video_test_dataset.map(prepare_dataset, num_proc=4)
+
+pdb.set_trace()
 import numpy as np
 
 WER = evaluate.load("wer")
@@ -175,32 +185,6 @@ def whisper_prepare_dataset(batch):
     return batch
 
 torch.cuda.empty_cache()
-
-training_args = Seq2SeqTrainingArguments(
-    output_dir="./whisper-medium-PAL128-25step",  # change to a repo name of your choice
-    per_device_train_batch_size=8,
-    gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
-    learning_rate=1e-5,
-    warmup_steps=100,
-    max_steps=1000,
-    gradient_checkpointing=True,
-    fp16=True,
-    evaluation_strategy="steps",
-    per_device_eval_batch_size=8,
-    predict_with_generate=True,
-    generation_max_length=512,
-    save_steps=100,
-    eval_steps=25,
-    logging_steps=100,
-    report_to=["tensorboard"],
-    load_best_model_at_end=True,
-    metric_for_best_model="wer",
-    greater_is_better=False,
-    push_to_hub=True,
-)
-
-from transformers import Seq2SeqTrainer
-
 
 def my_map_to_pred(batch):
     # pdb.set_trace()
@@ -265,34 +249,21 @@ def compute_metrics(pred):
 
     return {"wer": wer}
 
-whisper_train = train.map(whisper_prepare_dataset, num_proc=4)
+# whisper_train = train.map(whisper_prepare_dataset, num_proc=4)
+# pdb.set_trace()
+whisper_train_large = encoded_train.map(whisper_prepare_dataset, num_proc=4)
 whisper_dev = dev.map(whisper_prepare_dataset, num_proc=4)
 whisper_test = test.map(whisper_prepare_dataset, num_proc=4)
-
+# pdb.set_trace()
 torch.cuda.empty_cache()
 
-# trainer = Seq2SeqTrainer(
-#     args=training_args,
-#     model=model,
-#     train_dataset=whisper_train,
-#     eval_dataset=whisper_dev,
-#     data_collator=data_collator,
-#     compute_metrics=compute_metrics,
-#     tokenizer=processor.feature_extractor,
-# )
-
-fine_tuned_model = WhisperModel.from_pretrained(
-    "./whisper-medium-PAL128-25step"
-)
-pdb.set_trace()
-testing_args = Seq2SeqTrainingArguments(
-    output_dir="./whisper-medium-PAL128-25step",  # change to a repo name of your choice
-    do_eval=True,
+training_args = Seq2SeqTrainingArguments(
+    output_dir=fine_tuning_dir,  # change to a repo name of your choice
     per_device_train_batch_size=8,
     gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
     learning_rate=1e-5,
     warmup_steps=0,
-    max_steps=1000,
+    max_steps=3000,
     gradient_checkpointing=True,
     fp16=True,
     evaluation_strategy="steps",
@@ -306,21 +277,20 @@ testing_args = Seq2SeqTrainingArguments(
     load_best_model_at_end=True,
     metric_for_best_model="wer",
     greater_is_better=False,
-    push_to_hub=False,
+    push_to_hub=True,
 )
 
-
-predict_trainer = Seq2SeqTrainer(
-    args=testing_args,
-    model=fine_tuned_model,
+trainer = Seq2SeqTrainer(
+    args=training_args,
+    model=model,
+    train_dataset=whisper_train_large,
+    eval_dataset=whisper_dev,
     data_collator=data_collator,
     compute_metrics=compute_metrics,
     tokenizer=processor.feature_extractor,
 )
-pdb.set_trace()
-y_John_video= predict_trainer.predict(whisper_test)
-pdb.set_trace()
-# trainer.train()
+
+trainer.train()
 
 # ## Not fine tuned
 # z_result = encoded_test.map(my_map_to_pred)
