@@ -93,7 +93,9 @@ Werkzeug==2.0.3
 yarl==1.7.2
 zipp==3.7.0
 
-transformers
+# prevent more_itertools error 
+# https://github.com/huggingface/transformers/issues/20508
+transformers=4.27.1
 deepspeech
 tensorboardX
 jiwer

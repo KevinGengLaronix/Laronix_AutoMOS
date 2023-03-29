@@ -3,9 +3,7 @@ sys.path.append("src")
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-import os
 import numpy as np
-import hydra
 from model import load_ssl_model, PhonemeEncoder, DomainEmbedding, LDConditioner, Projection
 
 
