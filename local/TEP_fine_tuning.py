@@ -291,13 +291,13 @@ whisper_test = test.map(whisper_prepare_dataset, num_proc=4)
 
 patient_T_train_dev_test = patient_T_test_dataset.train_test_split(test_size=0.1, seed=1)
 patient_T_test = patient_T_train_dev_test['test']
-patient_T_train_dev = patient_T_train_dev_test['train'].train_test_split(test_size=int(len(patient_T_train_dev_test)*0.1), seed=1)
+patient_T_train_dev = patient_T_train_dev_test['train'].train_test_split(test_size=int(len(patient_T_train_dev_test['train'])*0.1), seed=1)
 patient_T_train = patient_T_train_dev['train']
 patient_T_dev = patient_T_train_dev['test']
 
 patient_L_train_dev_test = patient_L_test_dataset.train_test_split(test_size=0.1, seed=1)
 patient_L_test = patient_L_train_dev_test['test']
-patient_L_train_dev = patient_L_train_dev_test['train'].train_test_split(test_size=int(len(patient_L_train_dev_test)*0.1), seed=1)
+patient_L_train_dev = patient_L_train_dev_test['train'].train_test_split(test_size=int(len(patient_L_train_dev_test['train'])*0.1), seed=1)
 patient_L_train = patient_L_train_dev['train']
 patient_L_dev = patient_L_train_dev['test']
 
