@@ -1,4 +1,4 @@
-fine_tuning_dir = "./fine_tuned/SSD/model/whipser_medium_TEP_patient_L"
+fine_tuning_dir = "./fine_tuned/SSD/model/whipser_medium_TEP_patient_TL_T"
 """
 TODO:
     + [x] Load Configuration
@@ -188,7 +188,6 @@ encoded_Fary = Fary_PAL_test_dataset.map(prepare_dataset, num_proc=4)
 encoded_John_p326 = John_p326_test_dataset.map(prepare_dataset, num_proc=4)
 # encoded_John_video = John_video_test_dataset.map(prepare_dataset, num_proc=4)
 
-pdb.set_trace()
 import numpy as np
 
 WER = evaluate.load("wer")
@@ -308,6 +307,9 @@ encoded_patient_L_train = patient_L_train.map(whisper_prepare_dataset, num_proc=
 encoded_patient_L_dev = patient_L_dev.map(whisper_prepare_dataset, num_proc=4)
 encoded_patient_L_test = patient_L_test.map(whisper_prepare_dataset, num_proc=4)
 
+# pdb.set_trace()
+encoded_patient_TL_train = concatenate_datasets([encoded_patient_T_train, encoded_patient_L_train])
+# pdb.set_trace()
 torch.cuda.empty_cache()
 
 training_args = Seq2SeqTrainingArguments(
@@ -316,7 +318,7 @@ training_args = Seq2SeqTrainingArguments(
     gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
     learning_rate=1e-5,
     warmup_steps=0,
-    max_steps=1000,
+    max_steps=500,
     gradient_checkpointing=True,
     fp16=True,
     evaluation_strategy="steps",
@@ -336,8 +338,8 @@ training_args = Seq2SeqTrainingArguments(
 trainer = Seq2SeqTrainer(
     args=training_args,
     model=model,
-    train_dataset=encoded_patient_L_train,
-    eval_dataset=encoded_patient_L_dev,
+    train_dataset=encoded_patient_TL_train,
+    eval_dataset=encoded_patient_T_dev,
     data_collator=data_collator,
     compute_metrics=compute_metrics,
     tokenizer=processor.feature_extractor,
