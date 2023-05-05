@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 
 # Plot_UV
 
-
 def plot_UV(signal, audio_interv, sr):
     fig, ax = plt.subplots(nrows=2, sharex=True)
     librosa.display.waveshow(signal, sr=sr, ax=ax[0])

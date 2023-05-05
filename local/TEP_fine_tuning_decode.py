@@ -1,3 +1,5 @@
+fine_tuning_dir = "./fine_tuned/SSD/model/whipser_medium_TEP_patient_TL_T"
+
 """
 TODO:
     + [x] Whipser Fine Tuned Model Evalutation
@@ -25,7 +27,7 @@ import yaml
 import torch
 from pathlib import Path
 from transformers import AutoTokenizer, AutoFeatureExtractor, AutoModelForCTC, AutoProcessor
-from datasets import load_dataset
+from datasets import load_dataset, concatenate_datasets
 from datasets import Dataset, Audio
 import pdb
 import string
@@ -43,8 +45,9 @@ healthy_dir = "./data/Healthy"
 Fary_PAL_30 = "./data/Fary_PAL_p326_20230110_30"
 John_p326 = "./data/John_p326/output"
 John_video = "./data/20230103_video"
-P1tony = "data/Participant1_Tony_Recording/CLEAN_SENTENCES/CONVERSATIONAL/PAL"
 
+patient_T = "data/Patient_T/Patient_T"
+patient_L = "data/Patient_L/Patient_L"
 # Get Transcription, WER and PPM
 """
 TODO:
@@ -127,35 +130,19 @@ John_p326_test_dataset = John_p326_test_dataset.map(dataclean)
 John_video_test_dataset = load_dataset(
     "audiofolder", data_dir=John_video, split='train')
 John_video_test_dataset = John_video_test_dataset.map(dataclean)
+
+patient_T_test_dataset = load_dataset("audiofolder", data_dir=patient_T, split='train')
+patient_T_test_dataset = patient_T_test_dataset.map(dataclean)
+
+patient_L_test_dataset = load_dataset("audiofolder", data_dir=patient_L, split='train')
+patient_L_test_dataset = patient_L_test_dataset.map(dataclean)
 # pdb.set_trace()
 
-def train_dev_test_split(dataset: Dataset, dev_rate=0.1, test_rate=0.1, seed=1):
-    """
-    input: dataset
-    dev_rate,
-    test_rate
-    seed
-    -------
-    Output:
-    dataset_dict{"train", "dev", "test"}
-    """
-    train_dev_test = dataset.train_test_split(test_size=test_rate, seed=seed)
-    test = train_dev_test["test"]
-    train_dev = train_dev_test['train']
-    
-    # pdb.set_trace()
-    train_dev = train_dev.train_test_split(test_size=int(len(dataset)*dev_rate), seed=seed)
-    train = train_dev['train']
-    dev = train_dev['test']
-    return train, dev, test
-
-P1tony_dataset = load_dataset("audiofolder", data_dir=P1tony, split="train")
-P1tony_dataset = P1tony_dataset.map(dataclean)
 # train_dev / test
 ds = src_dataset.train_test_split(test_size=0.1, seed=1)
 
-# dataset_libri = load_dataset(
-#     "hf-internal-testing/librispeech_asr_dummy", "clean", split="validation")
+dataset_libri = load_dataset(
+    "hf-internal-testing/librispeech_asr_dummy", "clean", split="validation")
 
 train_dev = ds['train']
 # train / dev
@@ -175,8 +162,6 @@ encoded_healthy = healthy_test_dataset.map(prepare_dataset, num_proc=4)
 encoded_Fary = Fary_PAL_test_dataset.map(prepare_dataset, num_proc=4)
 encoded_John_p326 = John_p326_test_dataset.map(prepare_dataset, num_proc=4)
 encoded_John_video = John_video_test_dataset.map(prepare_dataset, num_proc=4)
-encoded_P1tony_dataset = P1tony_dataset.map(prepare_dataset, num_proc=4)
-x, y, z = train_dev_test_split(encoded_P1tony_dataset, 0.2, 0.1)
 # pdb.set_trace()
 
 WER = evaluate.load("wer")
@@ -216,8 +201,7 @@ torch.cuda.empty_cache()
 
 training_args = Seq2SeqTrainingArguments(
     # change to a repo name of your choice
-    # output_dir="./whisper-medium-PAL128-25step",
-    output_dir="fine_tuned/SSD/model/Tony1_AVA_base",
+    output_dir="./whisper-medium-PAL128-25step",
     per_device_train_batch_size=8,
     gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
     learning_rate=1e-5,
@@ -312,18 +296,36 @@ def compute_metrics(pred):
 whisper_train = train.map(whisper_prepare_dataset, num_proc=4)
 whisper_dev = dev.map(whisper_prepare_dataset, num_proc=4)
 whisper_test = test.map(whisper_prepare_dataset, num_proc=4)
-whisper_encode_P1tony = P1tony_dataset.map(whisper_prepare_dataset, num_proc=4)
-pdb.set_trace()
+
+patient_T_train_dev_test = patient_T_test_dataset.train_test_split(test_size=0.1, seed=1)
+patient_T_test = patient_T_train_dev_test['test']
+patient_T_train_dev = patient_T_train_dev_test['train'].train_test_split(test_size=int(len(patient_T_train_dev_test['train'])*0.1), seed=1)
+patient_T_train = patient_T_train_dev['train']
+patient_T_dev = patient_T_train_dev['test']
+
+patient_L_train_dev_test = patient_L_test_dataset.train_test_split(test_size=0.1, seed=1)
+patient_L_test = patient_L_train_dev_test['test']
+patient_L_train_dev = patient_L_train_dev_test['train'].train_test_split(test_size=int(len(patient_L_train_dev_test['train'])*0.1), seed=1)
+patient_L_train = patient_L_train_dev['train']
+patient_L_dev = patient_L_train_dev['test']
+
+
+encoded_patient_T_train = patient_T_train.map(whisper_prepare_dataset, num_proc=4)
+encoded_patient_T_dev = patient_T_dev.map(whisper_prepare_dataset, num_proc=4)
+encoded_patient_T_test = patient_T_test.map(whisper_prepare_dataset, num_proc=4)
+encoded_patient_L_train = patient_L_train.map(whisper_prepare_dataset, num_proc=4)
+encoded_patient_L_dev = patient_L_dev.map(whisper_prepare_dataset, num_proc=4)
+encoded_patient_L_test = patient_L_test.map(whisper_prepare_dataset, num_proc=4)
+
+# encoded_patient_L_T_train = concatenate_datasets(encoded_patient_T_train, encoded_patient_L_train)
+
 torch.cuda.empty_cache()
 
 fine_tuned_model = WhisperForConditionalGeneration.from_pretrained(
-    "./fine_tuned/SSD/model/Tony1_AVA_base/checkpoint-100"
+    fine_tuning_dir
 ).to("cuda")
-
-baseline_model = WhisperForConditionalGeneration.from_pretrained(
-    "./fine_tuned/whipser_medium_en_PAL300_step25_step2_VCTK/checkpoint-400"
-).to("cuda")
-    #"./fine_tuned/whipser_medium_en_PAL300_step25_step2_VCTK/checkpoint-400"
+    # "fine_tuned/SSD/model/whipser_medium_TEP_patient_T"
+    # "./fine_tuned/whipser_medium_en_PAL300_step25_step2_VCTK/checkpoint-400"
     #"./fine_tuned/whipser_medium_en_PAL300_step25_step2_VCTK/checkpoint-200"
 
 
@@ -343,41 +345,10 @@ def fine_tuned_map_to_pred(batch):
     return batch
 
 
-def zeroshot_map_to_pred(batch):
-    # pdb.set_trace()
-    audio = batch["audio"]
-    input_features = processor(
-        audio["array"], sampling_rate=audio["sampling_rate"], return_tensors="pt").input_features
-    # batch["reference"] = whisper_processor.tokenizer._normalize(batch['text'])
-    batch["reference"] = processor.tokenizer._normalize(batch['transcription'])
-
-    with torch.no_grad():
-        # predicted_ids = whisper_model.generate(input_features.to("cuda"))[0]
-        predicted_ids = model.generate(input_features.to("cuda"))[0]
-    transcription = tokenizer.decode(predicted_ids)
-    batch["prediction"] = tokenizer._normalize(transcription)
-    return batch
-
-def baseline_map_to_pred(batch):
-    # pdb.set_trace()
-    audio = batch["audio"]
-    input_features = processor(
-        audio["array"], sampling_rate=audio["sampling_rate"], return_tensors="pt").input_features
-    # batch["reference"] = whisper_processor.tokenizer._normalize(batch['text'])
-    batch["reference"] = processor.tokenizer._normalize(batch['transcription'])
-
-    with torch.no_grad():
-        # predicted_ids = whisper_model.generate(input_features.to("cuda"))[0]
-        predicted_ids = baseline_model.generate(input_features.to("cuda"))[0]
-    transcription = tokenizer.decode(predicted_ids)
-    batch["prediction"] = tokenizer._normalize(transcription)
-    return batch
-
-
+    # output_dir="./fine_tuned/whipser_medium_en_PAL300_step25_step2_VCTK/checkpoint-400",
 testing_args = Seq2SeqTrainingArguments(
     # change to a repo name of your choice
-    # output_dir="./fine_tuned/whipser_medium_en_PAL300_step25_step2_VCTK/checkpoint-400",
-    output_dir="fine_tuned/SSD/model/Tony1_AVA_base/checkpoint-100",
+    output_dir="fine_tuned/SSD/model/whipser_medium_TEP_patient_L",
     per_device_train_batch_size=8,
     gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
     learning_rate=1e-5,
@@ -398,7 +369,6 @@ testing_args = Seq2SeqTrainingArguments(
     greater_is_better=False,
     push_to_hub=False,
 )
-
 
 predict_trainer = Seq2SeqTrainer(
     args=testing_args,
@@ -408,104 +378,28 @@ predict_trainer = Seq2SeqTrainer(
     tokenizer=processor.feature_extractor,
 )
 
-baseline_args = Seq2SeqTrainingArguments(
-    # change to a repo name of your choice
-    # output_dir="./fine_tuned/whipser_medium_en_PAL300_step25_step2_VCTK/checkpoint-400",
-    output_dir= "./fine_tuned/whipser_medium_en_PAL300_step25_step2_VCTK/checkpoint-400",
-    per_device_train_batch_size=8,
-    gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
-    learning_rate=1e-5,
-    warmup_steps=100,
-    max_steps=1000,
-    gradient_checkpointing=True,
-    fp16=True,
-    evaluation_strategy="steps",
-    per_device_eval_batch_size=8,
-    predict_with_generate=True,
-    generation_max_length=512,
-    save_steps=100,
-    eval_steps=25,
-    logging_steps=100,
-    report_to=["tensorboard"],
-    load_best_model_at_end=True,
-    metric_for_best_model="wer",
-    greater_is_better=False,
-    push_to_hub=False,
-)
-
-baseline_args = Seq2SeqTrainingArguments(
-    # change to a repo name of your choice
-    # output_dir="./fine_tuned/whipser_medium_en_PAL300_step25_step2_VCTK/checkpoint-400",
-    output_dir= "./fine_tuned/whipser_medium_en_PAL300_step25_step2_VCTK/checkpoint-400",
-    per_device_train_batch_size=8,
-    gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
-    learning_rate=1e-5,
-    warmup_steps=100,
-    max_steps=1000,
-    gradient_checkpointing=True,
-    fp16=True,
-    evaluation_strategy="steps",
-    per_device_eval_batch_size=8,
-    predict_with_generate=True,
-    generation_max_length=512,
-    save_steps=100,
-    eval_steps=25,
-    logging_steps=100,
-    report_to=["tensorboard"],
-    load_best_model_at_end=True,
-    metric_for_best_model="wer",
-    greater_is_better=False,
-    push_to_hub=False,
-)
-
-zeroshot_trainer = Seq2SeqTrainer(args=baseline_args, model=model,data_collator=data_collator,compute_metrics=compute_metrics,tokenizer=processor.feature_extractor,)
-
-
-baseline_trainer = Seq2SeqTrainer(
-    args=baseline_args,
-    model=baseline_model,
-    data_collator=data_collator,
-    compute_metrics=compute_metrics,
-    tokenizer=processor.feature_extractor,
-)
-
 # trainer.train()
-## fine tuned
-# z_result = encoded_test.map(fine_tuned_map_to_pred)
+# fine tuned
+z_result = encoded_test.map(fine_tuned_map_to_pred)
 
 # 0.4692737430167598
-# z = WER.compute(references=z_result['reference'], predictions=z_result['prediction'])
+z = WER.compute(references=z_result['reference'], predictions=z_result['prediction'])
 # pdb.set_trace()
-# z_hel_result = encoded_healthy.map(fine_tuned_map_to_pred)
-# # z_hel = WER.compute(references=z_hel_result['reference'], predictions=z_hel_result['prediction'])
-# # 0.1591610117211598
+z_hel_result = encoded_healthy.map(fine_tuned_map_to_pred)
+z_hel = WER.compute(references=z_hel_result['reference'], predictions=z_hel_result['prediction'])
+# 0.1591610117211598
 
-pdb.set_trace()
+# pdb.set_trace()
 # z_fary_result = encoded_Fary.map(fine_tuned_map_to_pred)
 # z_far = WER.compute(references=z_fary_result['reference'], predictions=z_fary_result['prediction'])
 # 0.1791044776119403
 
-# P1tony all
-zxxxx = z.map(fine_tuned_map_to_pred)
-zyyyy= z.map(baseline_map_to_pred)
-zzzzz = z.map(zeroshot_map_to_pred)
-zy = WER.compute(references=zyyyy['reference'], predictions=zyyyy['prediction'])
-zx = WER.compute(references=zxxxx['reference'], predictions=zxxxx['prediction'])
-zz = WER.compute(references=zzzzz['reference'], predictions=zzzzz['prediction'])
+z_patient_L = encoded_patient_L_test.map(fine_tuned_map_to_pred)
+z_patient_L_result = WER.compute(references=z_patient_L['reference'], predictions=z_patient_L['prediction'])
+z_patient_T = encoded_patient_T_test.map(fine_tuned_map_to_pred)
+z_patient_T_result = WER.compute(references=z_patient_T['reference'], predictions=z_patient_T['prediction'])
 
-pdb.set_trace()
-z_P1tony_result = encoded_P1tony_dataset.map(fine_tuned_map_to_pred)
-z_P1tony_result_base = encoded_P1tony_dataset.map(baseline_map_to_pred)
-z_P1tony_result_zero = encoded_P1tony_dataset.map(zeroshot_map_to_pred)
-
-P1tony_result = WER.compute(references=z_P1tony_result['reference'], predictions=z_P1tony_result['prediction'])
-P1tony_result_base = WER.compute(references=z_P1tony_result_base['reference'], predictions=z_P1tony_result_base['prediction'])
-P1tony_result_zero = WER.compute(references=z_P1tony_result_zero['reference'], predictions=z_P1tony_result_zero['prediction'])
-
-
-z_far = WER.compute(references=z_P1tony_result['reference'], predictions=z_P1tony_result['prediction'])
-
-z_john_p326_result = encoded_John_p326.map(fine_tuned_map_to_pred)
+# z_john_p326_result = encoded_John_p326.map(fine_tuned_map_to_pred)
 # pdb.set_trace() 
 
 # z_john_p326 = WER.compute(references=z_john_p326_result['reference'], predictions=z_john_p326_result['prediction'])
@@ -519,5 +413,5 @@ pdb.set_trace()
 # p326 training
 # metrics={'test_loss': 0.4804028868675232, 'test_wer': 0.21787709497206703, 'test_runtime': 0.3594, 'test_samples_per_second': 44.517, 'test_steps_per_second': 5.565})
 # hel metrics={'test_loss': 1.6363693475723267, 'test_wer': 0.17951881554595928, 'test_runtime': 3.8451, 'test_samples_per_second': 41.611, 'test_steps_per_second': 5.201})
-# Fary: metrics={'test_loss': 1.4633615016937256, 'test_wer': 0.5572139303482587, 'test_runtime': 0.6627, 'test_samples_per_second': 45.27, 'test_steps_per_second': 6.036})
+# Fary: metrics={'t est_loss': 1.4633615016937256, 'test_wer': 0.5572139303482587, 'test_runtime': 0.6627, 'test_samples_per_second': 45.27, 'test_steps_per_second': 6.036})
 # p326 large: metrics={'test_loss': 0.6568527817726135, 'test_wer': 0.2889447236180904, 'test_runtime': 0.7169, 'test_samples_per_second': 51.613, 'test_steps_per_second': 6.975})

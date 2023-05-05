@@ -25,6 +25,9 @@ torch.cuda.set_device("cuda:0")
 audio_dir ="./data/Patient_sil_trim_16k_normed_5_snr_40"
 healthy_dir="./data/Healthy"
 Fary_PAL_30="./data/Fary_PAL_p326_20230110_30"
+patient_T = "data/Patient_T/Patient_T"
+patient_L = "data/Patient_L/Patient_L"
+
 John_p326 = "./data/John_p326/output"
 John_video = "./data/20230103_video"
 # audio_dir ="/home/kevingeng/laronix/laronix_automos/data/Healthy"
@@ -124,7 +127,14 @@ John_p326_test_dataset = John_p326_test_dataset.map(dataclean)
 
 John_video_test_dataset = load_dataset("audiofolder", data_dir=John_video, split='train')
 John_video_test_dataset = John_video_test_dataset.map(dataclean)
-# pdb.set_trace()
+
+patient_L_test_dataset = load_dataset("audiofolder", data_dir=patient_L, split="train")
+patient_L_test_dataset = patient_L_test_dataset.map(dataclean)
+
+patient_T_test_dataset = load_dataset("audiofolder", data_dir=patient_T, split="train")
+patient_T_test_dataset = patient_T_test_dataset.map(dataclean)
+
+pdb.set_trace()
 
 # train_dev / test
 ds = src_dataset.train_test_split(test_size=0.1, seed=1)
@@ -147,6 +157,8 @@ encoded_healthy = healthy_test_dataset.map(prepare_dataset, num_proc=4)
 encoded_Fary = Fary_PAL_test_dataset.map(prepare_dataset, num_proc=4)
 encoded_John_p326 = John_p326_test_dataset.map(prepare_dataset, num_proc=4)
 encoded_John_video = John_video_test_dataset.map(prepare_dataset, num_proc=4)
+encode_patient_T = patient_T_test_dataset.map(prepare_dataset, num_proc=4)
+encode_patient_L = patient_L_test_dataset.map(prepare_dataset, num_proc=4)
     # pdb.set_trace()
 import numpy as np
 
@@ -212,8 +224,8 @@ fine_tuned_model = AutoModelForCTC.from_pretrained(
 ## Whisper decoding
 
 from transformers import WhisperProcessor, WhisperForConditionalGeneration
-whisper_processor = WhisperProcessor.from_pretrained("openai/whisper-tiny")
-whisper_model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-tiny").to("cuda:0")
+whisper_processor = WhisperProcessor.from_pretrained("openai/whisper-medium")
+whisper_model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-medium").to("cuda:0")
 
 # whisper_pipe = pipeline(
 #   "automatic-speech-recognition",
@@ -306,25 +318,34 @@ fine_tuned_trainer = Trainer(
 # y_John_p326 = fine_tuned_trainer.predict(encoded_John_p326)
 # # metrics={'test_loss': 1.3678617477416992, 'test_wer': 0.4396984924623116, 'test_runtime': 0.7016, 'test_samples_per_second': 52.734, 'test_steps_per_second': 7.126})
 
+y_patient_T = ori_trainer.predict(encode_patient_T)
+y_patient_L = ori_trainer.predict(encode_patient_L)
+pdb.set_trace()
+z_result_patient_T = encode_patient_T.map(my_map_to_pred)
+z_T = WER.compute(references=z_result_patient_T['reference'], predictions=z_result_patient_T['prediction'])
+z_result_patient_L = encode_patient_L.map(my_map_to_pred)
+z_L = WER.compute(references=z_result_patient_L['reference'], predictions=z_result_patient_L['prediction'])
+
+
 ## Not fine tuned
-z_result = encoded_test.map(my_map_to_pred)
-# pdb.set_trace()
-# 0.4692737430167598
-z = WER.compute(references=z_result['reference'], predictions=z_result['prediction'])
+# z_result = encoded_test.map(my_map_to_pred)
+# # pdb.set_trace()
+# # 0.4692737430167598
+# z = WER.compute(references=z_result['reference'], predictions=z_result['prediction'])
 
-z_hel_result = encoded_healthy.map(my_map_to_pred)
-# 
-z_hel = WER.compute(references=z_hel_result['reference'], predictions=z_hel_result['prediction'])
-# 0.1591610117211598
+# z_hel_result = encoded_healthy.map(my_map_to_pred)
+# # 
+# z_hel = WER.compute(references=z_hel_result['reference'], predictions=z_hel_result['prediction'])
+# # 0.1591610117211598
 
-z_fary_result = encoded_Fary.map(my_map_to_pred)
-z_far = WER.compute(references=z_fary_result['reference'], predictions=z_fary_result['prediction'])
-# 0.1791044776119403
+# z_fary_result = encoded_Fary.map(my_map_to_pred)
+# z_far = WER.compute(references=z_fary_result['reference'], predictions=z_fary_result['prediction'])
+# # 0.1791044776119403
 
 
-z_john_p326_result = encoded_John_p326.map(my_map_to_pred)
-z_john_p326 = WER.compute(references=z_john_p326_result['reference'], predictions=z_john_p326_result['prediction'])
-# 0.4648241206030151
+# z_john_p326_result = encoded_John_p326.map(my_map_to_pred)
+# z_john_p326 = WER.compute(references=z_john_p326_result['reference'], predictions=z_john_p326_result['prediction'])
+# # 0.4648241206030151
 
 
 

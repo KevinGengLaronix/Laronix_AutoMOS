@@ -1,8 +1,10 @@
 """
 TODO:
-    + [x] Load Configuration
-    + [ ] Checking
-    + [ ] Better saving directory
+    + [x] VCP-111 Add user Utterance saving function
+        + [ ] User agreement for data collection
+        + [ ] Saving log
+        + [ ] User satisfaction
+
 """
 import numpy as np
 from pathlib import Path
