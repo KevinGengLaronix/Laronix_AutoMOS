@@ -123,9 +123,7 @@ def get_speech_interval(signal, db):
     pause_interv = [[x, y] for x, y in zip(pause_start, pause_end)]
     return audio_interv, pause_interv
 
-
 # plot UV
-
 
 def plot_UV(signal, audio_interv, sr):
     fig, ax = plt.subplots(nrows=2, sharex=True)
@@ -142,7 +140,7 @@ def plot_UV(signal, audio_interv, sr):
 # Evaluation model
 
 
-def calc_mos(audio_path, id, ref, pre_ppm, fig):
+def calc_mos(audio_path, id, ref, pre_ppm, fig=None):
     wav, sr = torchaudio.load(audio_path)
     if wav.shape[0] != 1:
         wav = wav[0, :]
@@ -181,7 +179,7 @@ def calc_mos(audio_path, id, ref, pre_ppm, fig):
 
     # VAD for pause detection
     wav_vad = torchaudio.functional.vad(wav, sample_rate=sr)
-
+    # pdb.set_trace()
     a_h, p_h = get_speech_interval(wav_vad.numpy(), db=40)
     # print(a_h)
     # print(len(a_h))
@@ -201,12 +199,12 @@ def calc_mos(audio_path, id, ref, pre_ppm, fig):
         error_msg = "GOOD JOB! Please click the Flag as Perfect to save this record.\n You can start recording the next sample."
 
     return (
+        fig_h,
         predic_mos,
         trans,
         wer,
         phone_transcription,
         ppm,
-        fig_h,
         error_msg,
     )
 
@@ -322,6 +320,8 @@ info = gr.Interface(
 if config["exp_id"] == None:
     config["exp_id"] = Path(config_yaml).stem
 
+# x = calc_mos(*examples[0])
+# pdb.set_trace()
 iface = gr.Interface(
     fn=calc_mos,
     inputs=[
@@ -333,9 +333,10 @@ iface = gr.Interface(
         reference_id,
         reference_textbox,
         reference_PPM,
-        gr.Image(type="filepath", label="Ref Wav and Pauses"),
+        # gr.Image(type="filepath", label="Ref Wav and Pauses"),
     ],
     outputs=[
+        gr.Plot(PlaceHolder="Wav/Pause Plot", label="wav_pause_plot"),
         gr.Textbox(placeholder="Predicted MOS", label="Predicted MOS"),
         gr.Textbox(placeholder="Hypothesis", label="Hypothesis"),
         gr.Textbox(placeholder="Word Error Rate", label="WER"),
@@ -344,7 +345,6 @@ iface = gr.Interface(
             label="Predicted Phonemes",
         ),
         gr.Textbox(placeholder="Phonemes per minutes", label="PPM"),
-        gr.Plot(PlaceHolder="Wav/Pause Plot", label="wav_pause_plot"),
         gr.Textbox(placeholder="Recording Feedback", label="message"),
     ],
     title="Laronix's Voice Quality Checking System",
@@ -352,10 +352,11 @@ iface = gr.Interface(
     allow_flagging="manual",
     flagging_dir="./exp/%s" % config["exp_id"],
     flagging_options=[
-        "Perfect",
-        "Suspicious_Speaking_Rate",
-        "Suspicious_Naturalness",
-        "Suspicious_Pause",
+        "Save"
+        # "Perfect",
+        # "Suspicious_Speaking_Rate",
+        # "Suspicious_Naturalness",
+        # "Suspicious_Pause",
     ],
     examples=examples,
     css="body {background-color: green}",
