@@ -28,6 +28,10 @@ In this component, a set of 50 sentences will be provided, consisting of questio
 
 The patients will have the freedom to talk about a given topic. They will be asked to respond with 5 to 10 sentences. The structure for this component can be referenced from the [IELTS speaking test](https://www.ieltsbuddy.com/IELTS-speaking-questions-with-answers.html).
 
+## Data Inclusion Criteria
+
++ No hearing loss or history of active cancer.
++ 6 weeks of practice with AVA.
 
 ## Document for Laronix Recording System
 
