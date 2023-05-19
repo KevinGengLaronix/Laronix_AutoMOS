@@ -8,7 +8,7 @@ The dataset is organized as follows:
 
 ### 1. Scripted Data
 
-The scripted data session includes 200 sentences collected from 5 articles. The references for both the audio and text versions of these sentences have already been uploaded or will be uploaded to the Laronix Recording system. The distribution of sentences from each article is as follows:
+The scripted data session includes 200 sentences collected from 5 articles. The references for both the audio and text versions of these sentences have already been uploaded or will be uploaded to the Laronix Recording system. (Ask [Kevin](kevin@laronix.com) for these files) The distribution of sentences from each article is as follows:
 
 - Arthur the Rat: 56 sentences
 - Cinder: 19 sentences
