@@ -139,7 +139,6 @@ def plot_UV(signal, audio_interv, sr):
 
 # Evaluation model
 
-
 def calc_mos(audio_path, id, ref, pre_ppm, fig=None):
     wav, sr = torchaudio.load(audio_path)
     if wav.shape[0] != 1:
@@ -150,6 +149,7 @@ def calc_mos(audio_path, id, ref, pre_ppm, fig=None):
     batch = wav.unsqueeze(0).repeat(10, 1, 1)
     csr = ChangeSampleRate(sr, osr)
     out_wavs = csr(wav)
+    
     # ASR
     trans = jiwer.ToLowerCase()(p(audio_path)["text"])
 
@@ -347,7 +347,7 @@ iface = gr.Interface(
         gr.Textbox(placeholder="Phonemes per minutes", label="PPM"),
         gr.Textbox(placeholder="Recording Feedback", label="message"),
     ],
-    title="Laronix's Voice Quality Checking System",
+    title="Laronix's Data Recording Platform",
     description=description,
     allow_flagging="manual",
     flagging_dir="./exp/%s" % config["exp_id"],
@@ -369,6 +369,6 @@ demo = gr.TabbedInterface(
 )
 assert config["auth"]["username"] != None
 demo.launch(
-    share=False,
-    auth=[(config["auth"]["username"], config["auth"]["password"])],
+    share=True,
 )
+# auth=[(config["auth"]["username"], config["auth"]["password"])],
