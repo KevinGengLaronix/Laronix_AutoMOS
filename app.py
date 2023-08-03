@@ -44,6 +44,8 @@ refs_txt = [" ".join(x.split()[1:]) for x in refs]
 ref_feature = np.loadtxt(config["ref_feature"], delimiter=",", dtype="str")
 ref_wavs = [str(x) for x in sorted(Path(config["ref_wavs"]).glob("**/*.wav"))]
 
+dummy_wavs = [None for x in np.arange(len(ref_wavs))]
+
 refs_ppm = np.array(ref_feature[:, -1][1:], dtype="str")
 reference_id = gr.Textbox(
     value="ID", placeholder="Utter ID", label="Reference_ID"
@@ -61,7 +63,7 @@ reference_PPM = gr.Textbox(
 # Set up interface
 print("Preparing Examples")
 examples = [
-    [w, i, x, y] for w, i, x, y in zip(ref_wavs, refs_ids, refs_txt, refs_ppm)
+    [w, w_, i, x, y] for w, w_, i, x, y in zip(ref_wavs, dummy_wavs, refs_ids, refs_txt, refs_ppm)
 ]
 
 # ASR part
@@ -139,7 +141,7 @@ def plot_UV(signal, audio_interv, sr):
 
 # Evaluation model
 
-def calc_mos(audio_path, id, ref, pre_ppm, fig=None):
+def calc_mos(_, audio_path, id, ref, pre_ppm, fig=None):
     wav, sr = torchaudio.load(audio_path)
     if wav.shape[0] != 1:
         wav = wav[0, :]
@@ -256,11 +258,11 @@ reference_PPM = gr.Textbox(
 
 # Flagging setup
 
-# Set up interface
-print("Preparing Examples")
-examples = [
-    [w, i, x, y] for w, i, x, y in zip(ref_wavs, refs_ids, refs_txt, refs_ppm)
-]
+# # Set up interface
+# print("Preparing Examples")
+# examples = [
+#     [w, i, x, y] for w, i, x, y in zip(ref_wavs, refs_ids, refs_txt, refs_ppm)
+# ]
 
 # Interface
 # Participant Information
@@ -329,7 +331,15 @@ iface = gr.Interface(
         gr.Audio(
             source="microphone",
             type="filepath",
-            label="Audio_to_evaluate",
+            label="Reference_Audio",
+            container=False,
+            interactive=False,
+        ),
+        gr.Audio(
+            source="microphone",
+            type="filepath",
+            container=True,
+            label="Audio_to_Evaluate"
         ),
         reference_id,
         reference_textbox,
