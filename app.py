@@ -196,7 +196,7 @@ def calc_mos(audio_path, id, ref, pre_ppm, fig=None):
     elif wer >= float(config["thre"]["WER"]):
         error_msg += "ERROR: Intelligibility is too low, Please try again\n"
     else:
-        error_msg = "GOOD JOB! Please click the Flag as Perfect to save this record.\n You can start recording the next sample."
+        error_msg = "GOOD JOB! Please click【Flag】button to save this record.\n You can start recording the next sample."
 
     return (
         fig_h,
@@ -241,8 +241,9 @@ with open("src/description.html", "r", encoding="utf-8") as f:
     
 
 refs_ppm = np.array(ref_feature[:, -1][1:], dtype="str")
+
 reference_id = gr.Textbox(
-    value="ID", placeholder="Utter ID", label="Reference_ID"
+    value="ID", placeholder="Utter ID", label="Reference_ID", visible=False
 )
 reference_textbox = gr.Textbox(
     value="Input reference here",
@@ -250,7 +251,7 @@ reference_textbox = gr.Textbox(
     label="Reference",
 )
 reference_PPM = gr.Textbox(
-    placeholder="Pneumatic Voice's PPM", label="Ref PPM"
+    placeholder="Pneumatic Voice's PPM", label="Ref PPM", visible=False
 )
 
 # Flagging setup
@@ -337,27 +338,28 @@ iface = gr.Interface(
     ],
     outputs=[
         gr.Plot(PlaceHolder="Wav/Pause Plot", label="wav_pause_plot"),
-        gr.Textbox(placeholder="Predicted MOS", label="Predicted MOS"),
+        gr.Textbox(placeholder="Predicted MOS", label="Predicted MOS", visible=False),
         gr.Textbox(placeholder="Hypothesis", label="Hypothesis"),
         gr.Textbox(placeholder="Word Error Rate", label="WER"),
         gr.Textbox(
             placeholder="Predicted Phonemes",
             label="Predicted Phonemes",
+            visible=False
         ),
-        gr.Textbox(placeholder="Phonemes per minutes", label="PPM"),
-        gr.Textbox(placeholder="Recording Feedback", label="message"),
+        gr.Textbox(placeholder="Phonemes per minutes", label="PPM", visible=False),
+        gr.Textbox(placeholder="Recording Feedback", label="Message"),
     ],
     title="Laronix's Data Recording Platform",
     description=description,
     allow_flagging="manual",
     flagging_dir="./exp/%s" % config["exp_id"],
-    flagging_options=[
-        "Save"
-        # "Perfect",
-        # "Suspicious_Speaking_Rate",
-        # "Suspicious_Naturalness",
-        # "Suspicious_Pause",
-    ],
+    # flagging_options=[
+    #     "Save"
+    #     # "Perfect",
+    #     # "Suspicious_Speaking_Rate",
+    #     # "Suspicious_Naturalness",
+    #     # "Suspicious_Pause",
+    # ],
     examples=examples,
     css="body {background-color: green}",
 )
