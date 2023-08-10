@@ -28,7 +28,7 @@ fsspec==2022.2.0
 future==0.18.2
 google-auth==2.6.0
 google-auth-oauthlib==0.4.6
-gradio==3.2
+gradio==3.14.0
 grpcio==1.44.0
 h11==0.12.0
 hydra-core==1.0.7
