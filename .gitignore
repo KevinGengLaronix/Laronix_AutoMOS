@@ -532,3 +532,7 @@ config
 src/wav2vec_small.pt
 *.ckpt
 *.bak
+
+#models
+fine_tuned/
+fine_tuning_config/
