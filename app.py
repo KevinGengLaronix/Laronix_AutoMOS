@@ -128,9 +128,7 @@ def get_speech_interval(signal, db):
     pause_interv = [[x, y] for x, y in zip(pause_start, pause_end)]
     return audio_interv, pause_interv
 
-
 # plot UV
-
 
 def plot_UV(signal, audio_interv, sr):
     fig, ax = plt.subplots(nrows=2, sharex=True)
@@ -147,11 +145,15 @@ def plot_UV(signal, audio_interv, sr):
 # Evaluation model
 
 
+<<<<<<< HEAD
 def calc_mos(_, audio_path, id, ref, pre_ppm, fig=None):
     if audio_path == None:
         audio_path = _
         print("using ref audio as eval audio since it's empty")
         
+=======
+def calc_mos(audio_path, id, ref, pre_ppm, fig=None):
+>>>>>>> fef725e1a042ca1b1a39f3d9e382363a6b3594db
     wav, sr = torchaudio.load(audio_path)
     if wav.shape[0] != 1:
         wav = wav[0, :]
@@ -345,10 +347,54 @@ info = gr.Interface(
 if config["exp_id"] == None:
     config["exp_id"] = Path(config_yaml).stem
 
+<<<<<<< HEAD
 ## Theme
 css = """
 .ref_text textarea {font-size: 40px !important}
 .message textarea {font-size: 40px !important}
+=======
+# x = calc_mos(*examples[0])
+# pdb.set_trace()
+iface = gr.Interface(
+    fn=calc_mos,
+    inputs=[
+        gr.Audio(
+            source="microphone",
+            type="filepath",
+            label="Audio_to_evaluate",
+        ),
+        reference_id,
+        reference_textbox,
+        reference_PPM,
+        # gr.Image(type="filepath", label="Ref Wav and Pauses"),
+    ],
+    outputs=[
+        gr.Plot(PlaceHolder="Wav/Pause Plot", label="wav_pause_plot"),
+        gr.Textbox(placeholder="Predicted MOS", label="Predicted MOS"),
+        gr.Textbox(placeholder="Hypothesis", label="Hypothesis"),
+        gr.Textbox(placeholder="Word Error Rate", label="WER"),
+        gr.Textbox(
+            placeholder="Predicted Phonemes",
+            label="Predicted Phonemes",
+        ),
+        gr.Textbox(placeholder="Phonemes per minutes", label="PPM"),
+        gr.Textbox(placeholder="Recording Feedback", label="message"),
+    ],
+    title="Laronix's Voice Quality Checking System",
+    description=description,
+    allow_flagging="manual",
+    flagging_dir="./exp/%s" % config["exp_id"],
+    flagging_options=[
+        "Save"
+        # "Perfect",
+        # "Suspicious_Speaking_Rate",
+        # "Suspicious_Naturalness",
+        # "Suspicious_Pause",
+    ],
+    examples=examples,
+    css="body {background-color: green}",
+)
+>>>>>>> fef725e1a042ca1b1a39f3d9e382363a6b3594db
 
 """
 
