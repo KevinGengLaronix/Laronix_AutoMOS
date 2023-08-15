@@ -532,3 +532,8 @@ config
 src/wav2vec_small.pt
 *.ckpt
 *.bak
+
+fine_tuned/
+
+# 
+user/
