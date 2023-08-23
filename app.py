@@ -70,7 +70,11 @@ examples = [
 ]
 
 # ASR part
-p = pipeline("automatic-speech-recognition")
+# p = pipeline("automatic-speech-recognition")
+# p = pipeline("automatic-speech-recognition",         
+#     model="KevinGeng/whipser_medium_en_PAL300_step25_step2_VTCK")
+p = pipeline("automatic-speech-recognition", model="KevinGeng/whipser_medium_en_PAL300_step25")
+
 
 # WER part
 transformation = jiwer.Compose(
@@ -141,19 +145,13 @@ def plot_UV(signal, audio_interv, sr):
     ax[1].set_ylim([-0.1, 1.1])
     return fig
 
-
 # Evaluation model
 
-
-<<<<<<< HEAD
 def calc_mos(_, audio_path, id, ref, pre_ppm, fig=None):
     if audio_path == None:
         audio_path = _
         print("using ref audio as eval audio since it's empty")
         
-=======
-def calc_mos(audio_path, id, ref, pre_ppm, fig=None):
->>>>>>> fef725e1a042ca1b1a39f3d9e382363a6b3594db
     wav, sr = torchaudio.load(audio_path)
     if wav.shape[0] != 1:
         wav = wav[0, :]
@@ -347,54 +345,10 @@ info = gr.Interface(
 if config["exp_id"] == None:
     config["exp_id"] = Path(config_yaml).stem
 
-<<<<<<< HEAD
 ## Theme
 css = """
 .ref_text textarea {font-size: 40px !important}
 .message textarea {font-size: 40px !important}
-=======
-# x = calc_mos(*examples[0])
-# pdb.set_trace()
-iface = gr.Interface(
-    fn=calc_mos,
-    inputs=[
-        gr.Audio(
-            source="microphone",
-            type="filepath",
-            label="Audio_to_evaluate",
-        ),
-        reference_id,
-        reference_textbox,
-        reference_PPM,
-        # gr.Image(type="filepath", label="Ref Wav and Pauses"),
-    ],
-    outputs=[
-        gr.Plot(PlaceHolder="Wav/Pause Plot", label="wav_pause_plot"),
-        gr.Textbox(placeholder="Predicted MOS", label="Predicted MOS"),
-        gr.Textbox(placeholder="Hypothesis", label="Hypothesis"),
-        gr.Textbox(placeholder="Word Error Rate", label="WER"),
-        gr.Textbox(
-            placeholder="Predicted Phonemes",
-            label="Predicted Phonemes",
-        ),
-        gr.Textbox(placeholder="Phonemes per minutes", label="PPM"),
-        gr.Textbox(placeholder="Recording Feedback", label="message"),
-    ],
-    title="Laronix's Voice Quality Checking System",
-    description=description,
-    allow_flagging="manual",
-    flagging_dir="./exp/%s" % config["exp_id"],
-    flagging_options=[
-        "Save"
-        # "Perfect",
-        # "Suspicious_Speaking_Rate",
-        # "Suspicious_Naturalness",
-        # "Suspicious_Pause",
-    ],
-    examples=examples,
-    css="body {background-color: green}",
-)
->>>>>>> fef725e1a042ca1b1a39f3d9e382363a6b3594db
 
 """
 
@@ -445,6 +399,8 @@ with gr.Blocks(css=css, theme=my_theme) as demo:
             )
         with gr.Row():
             b = gr.Button(value="1.Submit", variant="primary", elem_classes="submit")
+            # Todo
+            # b_more = gr.Button(value="Show More", elem_classes="verbose")
         with gr.Row():
             inputs = [
                 ref_audio,
@@ -454,7 +410,6 @@ with gr.Blocks(css=css, theme=my_theme) as demo:
                 reference_PPM,
             ]
             e = gr.Examples(examples, inputs, examples_per_page=5)
-    
     with gr.Column():
         with gr.Row():
             ## output block
@@ -495,10 +450,13 @@ with gr.Blocks(css=css, theme=my_theme) as demo:
                 ppm,
                 msg,
             ]
+    
             # b = gr.Button("Submit")
             b.click(
                 fn=calc_mos, inputs=inputs, outputs=outputs, api_name="Submit"
             )
+
+        
         # Logger
         callback = gr.CSVLogger()
         callback.setup(
@@ -539,11 +497,11 @@ with gr.Blocks(css=css, theme=my_theme) as demo:
             )
         with gr.Row():
             b3 = gr.ClearButton([ref_audio, eval_audio, reference_id, reference_textbox, reference_PPM, predict_mos, hyp, wer, ppm, msg], value="3.Clear All", elem_id="clear")
+            
 demo.launch()
 
 def save_and_clean(args):
     callback.flag(*args)
-    
     
 # pdb.set_trace()
 # x = calc_mos(*examples[0])
