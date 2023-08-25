@@ -90,6 +90,21 @@ if __name__ == "__main__":
     parser.add_argument(
         "--ref_wavs", type=str, required=True, help="Reference WAVs"
     )
+    parser.add_argument(
+        "--metadata",
+        type=str,
+        required=False,
+        help="metadata.csv including wav_id and reference",
+    )
+    
+    parser.add_argument(
+        "--model",
+        type=str,
+        required=False,
+        choices=['wav2vec+ctc', 'whipser-medium-FT', 'whipser-large-v2'],
+        help="ASR engine for evaluation:\n ver1: wav2vec+ctc \n ver2: whipser-medium(Fined-tuned)\n ver3: whipser-large-v2",
+        default=['whisper-medium-FT']
+    )
 
     parser.add_argument(
         "--output_dir",
@@ -97,6 +112,7 @@ if __name__ == "__main__":
         required=True,
         help="Output Directory for *.csv",
     )
+
     parser.add_argument(
         "--to_config",
         choices=["True", "False"],
@@ -119,7 +135,12 @@ if __name__ == "__main__":
         exit()
 
     # ASR part
-    p = pipeline("automatic-speech-recognition")
+    if args.model== "whipser-medium-FT":
+        p = pipeline("automatic-speech-recognition", model="KevinGeng/whipser_medium_en_PAL300_step25_step2_VTCK")
+    elif args.model == "wav2vec+ctc":
+        p = pipeline("automatic-speech-recognition")
+    elif args.model == "whisper-large-v2":
+        p = pipeline("automatic-speech-recognition", model="openai/whisper-large-v2")
 
     # WER part
     transformation = jiwer.Compose(
