@@ -543,4 +543,4 @@ user/
 # Testing
 !data/p326_split.txt
 !data/p326_split_ref.csv
-!data/p326_split/*.wav
+!data/p326_split/*
