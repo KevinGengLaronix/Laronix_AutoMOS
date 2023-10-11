@@ -47,34 +47,28 @@ ref_wavs = [str(x) for x in sorted(Path(config["ref_wavs"]).glob("**/*.wav"))]
 dummy_wavs = [None for x in np.arange(len(ref_wavs))]
 
 refs_ppm = np.array(ref_feature[:, -1][1:], dtype="str")
-reference_id = gr.Textbox(
-    value="ID", placeholder="Utter ID", label="Reference_ID"
-)
+
+reference_id = gr.Textbox(value="ID", placeholder="Utter ID", label="Reference_ID")
 
 reference_textbox = gr.Textbox(
     value="Input reference here",
     placeholder="Input reference here",
     label="Reference",
 )
-reference_PPM = gr.Textbox(
-    placeholder="Pneumatic Voice's PPM", label="Ref PPM"
-)
+reference_PPM = gr.Textbox(placeholder="Pneumatic Voice's PPM", label="Ref PPM")
 
 # Set up interface
+# remove dummpy wavs, ue the same ref_wavs for eval wavs
 print("Preparing Examples")
 examples = [
-    [w, w_, i, x, y]
-    for w, w_, i, x, y in zip(
-        ref_wavs, dummy_wavs, refs_ids, refs_txt, refs_ppm
-    )
+    [w, w_, i, x, y] for w, w_, i, x, y in zip(ref_wavs, ref_wavs, refs_ids, refs_txt, refs_ppm)
 ]
 
-# ASR part
-# p = pipeline("automatic-speech-recognition")
-# p = pipeline("automatic-speech-recognition",         
-#     model="KevinGeng/whipser_medium_en_PAL300_step25_step2_VTCK")
-p = pipeline("automatic-speech-recognition", model="KevinGeng/whipser_medium_en_PAL300_step25")
-
+p = pipeline(
+    "automatic-speech-recognition",
+    model="KevinGeng/whipser_medium_en_PAL300_step25",
+    device=0,
+)
 
 # WER part
 transformation = jiwer.Compose(
@@ -88,12 +82,8 @@ transformation = jiwer.Compose(
 )
 
 # WPM part
-processor = Wav2Vec2Processor.from_pretrained(
-    "facebook/wav2vec2-xlsr-53-espeak-cv-ft"
-)
-phoneme_model = Wav2Vec2ForCTC.from_pretrained(
-    "facebook/wav2vec2-xlsr-53-espeak-cv-ft"
-)
+processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-xlsr-53-espeak-cv-ft")
+phoneme_model = Wav2Vec2ForCTC.from_pretrained("facebook/wav2vec2-xlsr-53-espeak-cv-ft")
 
 
 class ChangeSampleRate(nn.Module):
@@ -106,9 +96,7 @@ class ChangeSampleRate(nn.Module):
         # Only accepts 1-channel waveform input
         wav = wav.view(wav.size(0), -1)
         new_length = wav.size(-1) * self.output_rate // self.input_rate
-        indices = torch.arange(new_length) * (
-            self.input_rate / self.output_rate
-        )
+        indices = torch.arange(new_length) * (self.input_rate / self.output_rate)
         round_down = wav[:, indices.long()]
         round_up = wav[:, (indices.long() + 1).clamp(max=wav.size(-1) - 1)]
         output = round_down * (1.0 - indices.fmod(1.0)).unsqueeze(0) + (
@@ -124,7 +112,6 @@ model = lightning_module.BaselineLightningModule.load_from_checkpoint(
 
 # Get Speech Interval
 
-
 def get_speech_interval(signal, db):
     audio_interv = librosa.effects.split(signal, top_db=db)
     pause_end = [x[0] for x in audio_interv[1:]]
@@ -133,6 +120,7 @@ def get_speech_interval(signal, db):
     return audio_interv, pause_interv
 
 # plot UV
+
 
 def plot_UV(signal, audio_interv, sr):
     fig, ax = plt.subplots(nrows=2, sharex=True)
@@ -145,13 +133,11 @@ def plot_UV(signal, audio_interv, sr):
     ax[1].set_ylim([-0.1, 1.1])
     return fig
 
-# Evaluation model
-
 def calc_mos(_, audio_path, id, ref, pre_ppm, fig=None):
     if audio_path == None:
         audio_path = _
         print("using ref audio as eval audio since it's empty")
-        
+
     wav, sr = torchaudio.load(audio_path)
     if wav.shape[0] != 1:
         wav = wav[0, :]
@@ -219,7 +205,9 @@ def calc_mos(_, audio_path, id, ref, pre_ppm, fig=None):
     elif wer >= float(config["thre"]["WER"]):
         error_msg += "ERROR: Intelligibility is too low, Please try again\n"
     else:
-        error_msg = "GOOD JOB! Please 【Save the Recording】.\nYou can start recording the next sample."
+        error_msg = (
+            "GOOD JOB! Please 【Save the Recording】.\nYou can start recording the next sample."
+        )
 
     return (
         fig_h,
@@ -231,60 +219,21 @@ def calc_mos(_, audio_path, id, ref, pre_ppm, fig=None):
         error_msg,
     )
 
-
-# description = """
-# This is the experiment page for Laronix Data Recording.\n
-# \n
-# 1. Select one example from below, a sound file, with its reference transcription and its speaking rate will be loaded as inputs.\n
-#     You can check the sound file first and prepare for reading the transcription at a similar tempo.\n
-# 2. Delete the sound file (click the X button on the right), a recording button will appear.\n
-# 3. Click the recording button to start, click again to stop. Make sure you are not mispronouncing or including any detectable noises.\n
-# 4. Click "Submit" button and wait for the result.\n
-# 5. Please check the message box to see the feedback, if ERROR appears, delete your previous recording and try again :).\n
-# 6. If "GOOD JOB!" message appears, click "Flag as Perfect" and start another recording.\n
-# 7. If you try several times (N >= 10) and still can not clear the mission, you can flag your best recording by clicking "Doubtful Speaking Rate" or "Doubtful Naturalness". \n
-#     Yet this seldom happens, so please try to meet the system's requirement first!\n
-# 8. If you have any other question, Please contact kevin@laronix.com \n
-# """
-# Requirements: \n
-
-# Predicted MOS >=%0.2f \n
-# WER <= %0.2f \n
-# Pef PPM - %0.1f < PPM < Ref PPM + %0.1f \n
-# """ % (
-#     float(config["thre"]["AUTOMOS"]),
-#     float(config["thre"]["WER"]),
-#     float(config["thre"]["minppm"]),
-#     float(config["thre"]["maxppm"]),
-# )
-
 with open("src/description.html", "r", encoding="utf-8") as f:
     description = f.read()
 # description
 
-
 refs_ppm = np.array(ref_feature[:, -1][1:], dtype="str")
 
-reference_id = gr.Textbox(
-    value="ID", placeholder="Utter ID", label="Reference_ID", visible=False
-)
+reference_id = gr.Textbox(value="ID", placeholder="Utter ID", label="Reference_ID", visible=False)
 reference_textbox = gr.Textbox(
     value="Input reference here",
     placeholder="Input reference here",
     label="Reference",
 )
-reference_PPM = gr.Textbox(
-    placeholder="Pneumatic Voice's PPM", label="Ref PPM", visible=False
-)
+reference_PPM = gr.Textbox(placeholder="Pneumatic Voice's PPM", label="Ref PPM", visible=False)
 
 # Flagging setup
-
-# # Set up interface
-# print("Preparing Examples")
-# examples = [
-#     [w, i, x, y] for w, i, x, y in zip(ref_wavs, refs_ids, refs_txt, refs_ppm)
-# ]
-
 
 # Interface
 # Participant Information
@@ -315,7 +264,7 @@ def record_part_info(name, gender, first_lng):
     return message, id_str
 
 
-# information page
+# information page not using now
 name = gr.Textbox(placeholder="Name", label="Name")
 gender = gr.CheckboxGroup(["Male", "Female"], label="gender")
 first_lng = gr.CheckboxGroup(
@@ -328,9 +277,7 @@ first_lng = gr.CheckboxGroup(
     label="English Proficiency (CEFR)",
 )
 
-msg = gr.Textbox(
-    placeholder="Evaluation for valid participant", label="message"
-)
+msg = gr.Textbox(placeholder="Evaluation for valid participant", label="message")
 id_str = gr.Textbox(placeholder="participant id", label="participant_id")
 
 info = gr.Interface(
@@ -345,11 +292,10 @@ info = gr.Interface(
 if config["exp_id"] == None:
     config["exp_id"] = Path(config_yaml).stem
 
-## Theme
+## This is the theme for the interface
 css = """
 .ref_text textarea {font-size: 40px !important}
 .message textarea {font-size: 40px !important}
-
 """
 
 my_theme = gr.themes.Default().set(
@@ -359,47 +305,53 @@ my_theme = gr.themes.Default().set(
     button_secondary_text_color="black",
 )
 
+# Callback for saving the recording
+callback = gr.CSVLogger()
+
 with gr.Blocks(css=css, theme=my_theme) as demo:
     with gr.Column():
         with gr.Row():
             ref_audio = gr.Audio(
-                    source="microphone",
-                    type="filepath",
-                    label="Reference_Audio",
-                    container=True,
-                    interactive=False,
-                    visible=False
-                )
+                source="microphone",
+                type="filepath",
+                label="Reference_Audio",
+                container=True,
+                interactive=False,
+                visible=False,
+            )
             with gr.Row():
                 eval_audio = gr.Audio(
-                        source="microphone",
-                        type="filepath",
-                        container=True,
-                        label="Audio_to_Evaluate",
+                    source="microphone",
+                    type="filepath",
+                    container=True,
+                    label="Audio_to_Evaluate",
+                )
+                b_redo = gr.ClearButton(
+                    value="Redo", variant="stop", components=[eval_audio], size="sm"
+                )
+                reference_textbox = gr.Textbox(
+                    value="Input reference here",
+                    placeholder="Input reference here",
+                    label="Reference",
+                    interactive=True,
+                    elem_classes="ref_text",
+                )
+                with gr.Accordion("Input for Development", open=False):
+                    reference_id = gr.Textbox(
+                        value="ID",
+                        placeholder="Utter ID",
+                        label="Reference_ID",
+                        visible=True,
                     )
-                b_redo = gr.ClearButton(value="Redo", variant="stop", components=[eval_audio],size="sm")
-                
-            reference_id = gr.Textbox(
-                value="ID",
-                placeholder="Utter ID",
-                label="Reference_ID",
-                visible=False,
-            )
-            reference_textbox = gr.Textbox(
-                value="Input reference here",
-                placeholder="Input reference here",
-                label="Reference",
-                interactive=False,
-                elem_classes="ref_text"
-            )
-            reference_PPM = gr.Textbox(
-                placeholder="Pneumatic Voice's PPM",
-                label="Ref PPM",
-                visible=False,
-            )
+                    reference_PPM = gr.Textbox(
+                        placeholder="Pneumatic Voice's PPM",
+                        label="Ref PPM",
+                        visible=True,
+                    )
         with gr.Row():
             b = gr.Button(value="1.Submit", variant="primary", elem_classes="submit")
-            # Todo
+
+            # TODO
             # b_more = gr.Button(value="Show More", elem_classes="verbose")
         with gr.Row():
             inputs = [
@@ -410,37 +362,40 @@ with gr.Blocks(css=css, theme=my_theme) as demo:
                 reference_PPM,
             ]
             e = gr.Examples(examples, inputs, examples_per_page=5)
+
     with gr.Column():
         with gr.Row():
             ## output block
-            wav_plot = gr.Plot(PlaceHolder="Wav/Pause Plot", label="wav_pause_plot", visible=False)
-            
-            predict_mos = gr.Textbox(
+            msg = gr.Textbox(
+                placeholder="Recording Feedback",
+                label="Message",
+                interactive=False,
+                elem_classes="message",
+            )
+            with gr.Accordion("Output for Development", open=False):
+                wav_plot = gr.Plot(PlaceHolder="Wav/Pause Plot", label="wav_pause_plot", visible=True)
+
+                predict_mos = gr.Textbox(
                     placeholder="Predicted MOS",
                     label="Predicted MOS",
-                    visible=False,
+                    visible=True,
                 )
-            
-            hyp = gr.Textbox(
-                    placeholder="Hypothesis", label="Hypothesis", visible=False
-                )
-            
-            wer = gr.Textbox(
-                    placeholder="Word Error Rate", label="WER", visible=False
-                )
-            
-            predict_pho = gr.Textbox(
+
+                hyp = gr.Textbox(placeholder="Hypothesis", label="Hypothesis", visible=True)
+
+                wer = gr.Textbox(placeholder="Word Error Rate", label="WER", visible=True)
+
+                predict_pho = gr.Textbox(
                     placeholder="Predicted Phonemes",
                     label="Predicted Phonemes",
-                    visible=False,
+                    visible=True,
                 )
-        
-            ppm = gr.Textbox(
+
+                ppm = gr.Textbox(
                     placeholder="Phonemes per minutes",
                     label="PPM",
-                    visible=False,)
-            msg = gr.Textbox(placeholder="Recording Feedback", label="Message", interactive=False, elem_classes="message")
-
+                    visible=True,
+                )
             outputs = [
                 wav_plot,
                 predict_mos,
@@ -450,17 +405,13 @@ with gr.Blocks(css=css, theme=my_theme) as demo:
                 ppm,
                 msg,
             ]
-    
-            # b = gr.Button("Submit")
-            b.click(
-                fn=calc_mos, inputs=inputs, outputs=outputs, api_name="Submit"
-            )
 
-        
+            # b = gr.Button("Submit")
+            b.click(fn=calc_mos, inputs=inputs, outputs=outputs, api_name="Submit")
+
         # Logger
-        callback = gr.CSVLogger()
         callback.setup(
-            [
+            components=[
                 eval_audio,
                 reference_id,
                 reference_textbox,
@@ -469,18 +420,17 @@ with gr.Blocks(css=css, theme=my_theme) as demo:
                 hyp,
                 wer,
                 ppm,
-                msg,
-            ],
-            "./exp/%s" % config["exp_id"],
+                msg],
+            flagging_dir="./exp/%s" % config["exp_id"],
         )
+
         with gr.Row():
-            
             b2 = gr.Button("2. Save the Recording", variant="primary", elem_id="save")
             js_confirmed_saving = "(x) => confirm('Recording Saved!')"
-
+            # eval_audio,
             b2.click(
                 lambda *args: callback.flag(args),
-                [
+                inputs=[
                     eval_audio,
                     reference_id,
                     reference_textbox,
@@ -491,75 +441,26 @@ with gr.Blocks(css=css, theme=my_theme) as demo:
                     ppm,
                     msg,
                 ],
-                None,
+                outputs=None,
                 preprocess=False,
-                _js=js_confirmed_saving
+                api_name="flagging",
             )
         with gr.Row():
-            b3 = gr.ClearButton([ref_audio, eval_audio, reference_id, reference_textbox, reference_PPM, predict_mos, hyp, wer, ppm, msg], value="3.Clear All", elem_id="clear")
-            
-demo.launch()
+            b3 = gr.ClearButton(
+                [
+                    ref_audio,
+                    eval_audio,
+                    reference_id,
+                    reference_textbox,
+                    reference_PPM,
+                    predict_mos,
+                    hyp,
+                    wer,
+                    ppm,
+                    msg,
+                ],
+                value="3.Clear All",
+                elem_id="clear",
+            )
 
-def save_and_clean(args):
-    callback.flag(*args)
-    
-# pdb.set_trace()
-# x = calc_mos(*examples[0])
-# pdb.set_trace()
-# iface = gr.Interface(
-#     fn=calc_mos,
-#     inputs=[
-#         gr.Audio(
-#             source="microphone",
-#             type="filepath",
-#             label="Reference_Audio",
-#             container=False,
-#             interactive=False,
-#         ),
-#         gr.Audio(
-#             source="microphone",
-#             type="filepath",
-#             container=True,
-#             label="Audio_to_Evaluate"
-#         ),
-#         reference_id,
-#         reference_textbox,
-#         reference_PPM,
-#         # gr.Image(type="filepath", label="Ref Wav and Pauses"),
-#     ],
-#     outputs=[
-#         gr.Plot(PlaceHolder="Wav/Pause Plot", label="wav_pause_plot"),
-#         gr.Textbox(placeholder="Predicted MOS", label="Predicted MOS", visible=False),
-#         gr.Textbox(placeholder="Hypothesis", label="Hypothesis"),
-#         gr.Textbox(placeholder="Word Error Rate", label="WER"),
-#         gr.Textbox(
-#             placeholder="Predicted Phonemes",
-#             label="Predicted Phonemes",
-#             visible=False
-#         ),
-#         gr.Textbox(placeholder="Phonemes per minutes", label="PPM", visible=False),
-#         gr.Textbox(placeholder="Recording Feedback", label="Message"),
-#     ],
-#     title="Laronix's Data Recording Platform",
-#     description=description,
-#     allow_flagging="manual",
-#     flagging_dir="./exp/%s" % config["exp_id"],
-#     # flagging_options=[
-#     #     "Save"
-#     #     # "Perfect",
-#     #     # "Suspicious_Speaking_Rate",
-#     #     # "Suspicious_Naturalness",
-#     #     # "Suspicious_Pause",
-#     # ],
-#     examples=examples,
-#     css="body {background-color: green}",
-# )
-
-# print("Launch examples")
-
-# demo = gr.TabbedInterface(
-#     [iface, info], tab_names=["Experiment", "Participant Information"]
-# )
-# # assert config["auth"]["username"] != None
-# demo.launch(share=True)
-# # auth=[(config["auth"]["username"], config["auth"]["password"])],
+demo.launch(share=True)

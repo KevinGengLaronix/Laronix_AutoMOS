@@ -54,14 +54,14 @@ model = lightning_module.BaselineLightningModule.load_from_checkpoint(
 ).eval()
 
 
-def calc_wer(audio_path, ref):
+def calc_wer(audio_path, ref, ASR_pipeline):
     wav, sr = torchaudio.load(audio_path)
     osr = 16_000
     batch = wav.unsqueeze(0).repeat(10, 1, 1)
     csr = ChangeSampleRate(sr, osr)
     out_wavs = csr(wav)
     # ASR
-    trans = p(audio_path)["text"]
+    trans = ASR_pipeline(audio_path)["text"]
     # WER
     wer = jiwer.wer(
         ref,
@@ -100,10 +100,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model",
         type=str,
-        required=False,
+        default='whisper-medium-FT',
         choices=['wav2vec+ctc', 'whipser-medium-FT', 'whipser-large-v2'],
         help="ASR engine for evaluation:\n ver1: wav2vec+ctc \n ver2: whipser-medium(Fined-tuned)\n ver3: whipser-large-v2",
-        default=['whisper-medium-FT']
     )
 
     parser.add_argument(
@@ -135,13 +134,14 @@ if __name__ == "__main__":
         exit()
 
     # ASR part
-    if args.model== "whipser-medium-FT":
-        p = pipeline("automatic-speech-recognition", model="KevinGeng/whipser_medium_en_PAL300_step25_step2_VTCK")
+    if args.model== "whisper-medium-FT":
+        ASR_pipeline = pipeline("automatic-speech-recognition", model="KevinGeng/whipser_medium_en_PAL300_step25")
     elif args.model == "wav2vec+ctc":
-        p = pipeline("automatic-speech-recognition")
+        ASR_pipeline = pipeline("automatic-speech-recognition")
     elif args.model == "whisper-large-v2":
-        p = pipeline("automatic-speech-recognition", model="openai/whisper-large-v2")
-
+        ASR_pipeline = pipeline("automatic-speech-recognition", model="openai/whisper-large-v2")
+    
+    # pdb.set_trace()
     # WER part
     transformation = jiwer.Compose(
         [
@@ -180,7 +180,7 @@ if __name__ == "__main__":
     )
     # Set up interface
     result = []
-    result.append("id, trans, wer")
+    result.append("id,ref,hyp,wer")
 
     
     for id, x, y in track(
@@ -188,10 +188,11 @@ if __name__ == "__main__":
         total=len(refs_ids),
         description="Loading references information",
     ):
-        trans, wer = calc_wer(x, y)
+        trans, wer = calc_wer(x, y, ASR_pipeline=ASR_pipeline)
         record = ",".join(
             [
                 id,
+                str(y),
                 str(trans),
                 str(wer)
             ]
