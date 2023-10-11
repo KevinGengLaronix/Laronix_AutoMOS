@@ -514,7 +514,7 @@ Temporary Items
 !.gitsubmodules
 
 # ignore data
-data/
+data/*
 exp/
 !src/lightning_module.py
 *.wav
@@ -539,3 +539,8 @@ fine_tuned/
 user/
 
 .vscode/
+
+# Testing
+!data/p326_split.txt
+!data/p326_split_ref.csv
+!data/p326_split/*.wav

@@ -1,0 +1,48 @@
+p326_001.txt    Please call Stella.
+p326_002.txt    Ask her to bring these things with her from the store.
+p326_003_000.txt    Six spoons of fresh snow peas, 
+p326_003_001.txt    five thick slabs of blue cheese,
+p326_003_002.txt     and maybe a snack for her brother Bob.
+p326_004.txt    We also need a small plastic snake and a big toy frog for the kids.
+p326_005_000.txt    She can scoop these things into three red bags,
+p326_005_001.txt    and we will go meet her Wednesday at the train station.
+p326_006_000.txt    When the sunlight strikes raindrops in the air,
+p326_006_001.txt    they act as a prism and form a rainbow.
+p326_007.txt    The rainbow is a division of white light into many beautiful colors.
+p326_008_000.txt    These take the shape of a long round arch,
+p326_008_001.txt    with its path high above,
+p326_008_002.txt    and its two ends apparently beyond the horizon.
+p326_009.txt    There is , according to legend, a boiling pot of gold at one end.
+p326_010.txt    People look, but no one ever finds it.
+p326_011_000.txt    When a man looks for something beyond his reach,
+p326_011_001.txt    his friends say he is looking for the pot of gold at the end of the rainbow.
+p326_012.txt    Throughout the centuries people have explained the rainbow in various ways.
+p326_013.txt    Some have accepted it as a miracle without physical explanation.
+p326_014.txt    To the Hebrews it was a token that there would be no more universal floods.
+p326_015.txt    The Greeks used to imagine that it was a sign from the gods to foretell war or heavy rain.
+p326_016.txt    The Norsemen considered the rainbow as a bridge over which the gods passed from the earth to their home in the sky.
+p326_017.txt    Others have tried to explain the phenomenon physically.
+p326_018.txt    Aristotle thought that the rainbow was caused by reflection of the sun's rays by the rain.
+p326_019_000.txt    Since then physicists have found it is not reflection,
+p326_019_001.txt     but refraction by the raindrops which causes the rainbows.
+p326_020.txt    Many complicated ideas about the rainbow have been formed.
+p326_021_000.txt    The difference in the rainbow depends considerably upon the size of the drops,
+p326_021_001.txt    and the width of the colored band increases as the size of the drops increases.
+p326_022.txt    The actual primary rainbow observed is said to be the effect of super-imposition of a number of bows.
+p326_023_000.txt    If the red of the second bow falls upon the green of the first,
+p326_023_001.txt    the result is to give a bow with an abnormally wide yellow band,
+p326_023_002.txt    since red and green light when mixed form yellow.
+p326_024_000.txt    This is a very common type of bow,
+p326_024_001.txt    one showing mainly red and yellow,
+p326_024_002.txt    with little or no green or blue.
+p326_125.txt    He looked very sharp.
+p326_203.txt    For the moment, our position remains the same.
+p326_207.txt    I came into this world with nothing.
+p326_214.txt    It's not long enough.
+p326_215.txt    My view has now completely changed.
+p326_220.txt    He was then replaced by Ross.
+p326_223.txt    She did not attend the courtroom.
+p326_283.txt    We will be homeless.
+p326_284.txt    Six of the asylum seekers left the offices, it was reported.
+p326_292.txt    The problems are a result of that shortfall.
+p326_311.txt    It's a record label, not a form of music.

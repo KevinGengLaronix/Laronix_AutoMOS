@@ -1,0 +1,38 @@
+id, pred_mos, trans, wer, pred_phone, ppm
+p326_001.txt,4.00063943862915,PLACE CALL STELLA,0.6666666666666666,['p l eɪ s k oː s t ɛ l ɐ'],374.64522232734157
+p326_002.txt,4.074558973312378,ASK HER TO BRING THESE THINGS WITH HER FROM THE STORE,0.09090909090909091,['ɑː s k ɚ t ə b ɹ ɪ ŋ n aɪ s ɪ ŋ z w ɪ ð h æ f ɹ ʌ m ð ə s t oː'],591.7321863956387
+p326_003_000.txt,4.014528036117554,SIX SPOONS OF FRESH SNOW PAYS,0.16666666666666666,['s ɪ k s p oʊ n z ʌ v f ɹ ɛ ʃ s n oʊ p eɪ z'],612.4597275830171
+p326_003_001.txt,3.8058773279190063,FIVE THICK SLABS OF BLUE CHESE,0.16666666666666666,['f aɪ v θ ɪ k s l æ b s ʌ v b l uː tʃ eɪ z'],595.844766758134
+p326_003_002.txt,3.845659852027893,AND MAYBE A SNACK FOR HER BROTHER BOB,0.125,['æ m aɪ v iː ɪ z s n æ k f ɚ h ɚ b ɹ a ð ə b oː b'],721.2857702861623
+p326_004.txt,3.95869243144989,WEOSA NADE A SMALL PLASTIC SNAKE AND A BIG TOY FROG FOR THE KIDS,0.26666666666666666,['w iː oː l s oʊ n eɪ d ɐ s m oː l p l æ s t ɪ k s n aɪ k ɛ n ɐ b ɪ ɡ t f ɹ ɔ ɡ f ɚ ð ə k ɪ d z'],618.9524893397743
+p326_005_000.txt,4.101123213768005,SHE CAN SCOOP THESE THINGS INTO THREE RED BAGS,0.1111111111111111,['ʃ iː k ə n s k oʊ p ð iː z θ ɪ ŋ z ɪ n t ə θ ɹ iː ɹ ɛ d b æ ɡ z'],708.0922486846204
+p326_005_001.txt,3.83892560005188,AND WE WILL GO MEET HER WEDNESDAY AT THE TRAIN STATION,0.09090909090909091,['æ n w iː w ʊ ɡ oʊ ə m eɪ t ə w aɪ n s t aɪ ə ð ə t ɹ aɪ n s t eɪ ʃ ə n'],796.4808269019695
+p326_006_000.txt,4.083623170852661,WHEN THE SUNLIGHT STRIKES RAINDROPS IN THE AIR,0.125,['w ɛ n ð ə s ʌ n l aɪ t s t ɹ aɪ k s ɹ aɪ n d ɹ ɔ p s ɪ n ð ɪ ɛ'],934.5895486062284
+p326_006_001.txt,3.8963528871536255,THEY ACT AS A PRISM AND FORM A RHIMBER,0.1111111111111111,['ð eɪ æ k t æ z ɐ p ɹ ɪ z ə m æ n d f oː m ɐ ɡ ɹ aɪ m b ɚ'],1361.8690672177659
+p326_007.txt,4.0075953006744385,THE RAINBOW IS A DIVISION OF WHITE LIGHT INTO MANY BEAUTIFUL COLORS,0.08333333333333333,['ð ə ɹ aɪ m b oʊ ɪ z ɐ d ɪ v ɪ ʒ ə n ʌ v w aɪ t l aɪ t ɪ n z m ɛ n iː b j uː t ɪ f ʊ k ʌ l ə z'],683.1156369438769
+p326_008_000.txt,3.973626494407654,THESE TIGHT THE SHAPE OF A LONG ROUND ARCH,0.2222222222222222,['ð eɪ z t aɪ ð ə ʃ aɪ p ʌ v ə l ɔ ŋ ɹ aɪ n d ɑː dʒ'],698.4896924264139
+p326_008_001.txt,3.808865785598755,WITH ITS PATH HIGH ABOVE,0.2,['w ɪ ð ɪ ts p ɑː θ h aɪ ə b ʌ v'],740.876851273382
+p326_008_002.txt,3.972397565841675,AND ITS TWO ENDS APPARENTLY BEYOND THE HORIZON,0.125,['æ n ɪ ts s t uː ɛ n z ɐ p æ ɹ ə n l i b ɪ ɔ n d ð ɪ h ə ɹ aɪ z ə n'],918.8068272451746
+p326_009.txt,4.016266345977783,THERE IS ACCORDING TO LEGEND A BOILING POT OF GOLD AT ONE END,0.21428571428571427,['ð ɛ ɹ ɪ z ɐ k oː ɾ ɪ ŋ t ə l ɛ dʒ ə n d ɐ b oʊ l ɪ ŋ p ɔ t ʌ v ɡ oʊ l d æ t w a n ɛ n d'],637.477074857179
+p326_010.txt,3.8388251662254333,PAPE LOOK BUT NO ONE EVER FINDS IT,0.375,['p iː p ɚ l ʊ k b ʌ t n oː w ʌ n ɛ v ɚ f aɪ n d z ɪ t'],616.512253181032
+p326_011_000.txt,3.894524931907654,WHEN A MAN LOOKS FOR SOMETHING BEYOND HIS REACH,0.1111111111111111,['w ɛ n ɐ m æ n l ʊ k s ə s m ð ɪ ŋ b iː j ɔ n d h ɪ z ɹ eɪ t'],1091.3509911275464
+p326_011_001.txt,3.8110251426696777,HIS FRIENDS SAY HE IS LOOKING FOR THE POT OF GOLD AT THE END OF THE RAINBOW,0.058823529411764705,['h ɪ z f ɹ ɛ n d z s æ h h iː ɪ z l ʊ k ɪ ŋ f ɚ ð ə p ɾ ʌ v ɡ oː d ə ð ɪ ɛ n d ʌ v ð ə ɹ aɪ m b ɚ'],950.6886452546338
+p326_012.txt,3.8410024642944336,THROUGHOUT THE CENTURIES PEOPLE HAVE EXPLAINED THE RAINBOW IN VARIOUS WAYS,0.09090909090909091,['θ ɹ uː aʊ ð ə s ɛ n tʃ ɚ ɹ i s p iː p ə l æ v ɪ k s p l eɪ n d ð ə ɹ aɪ m b ɔ ɪ n v ɛ ɹ i ɪ s w eɪ z'],694.6276178111224
+p326_013.txt,3.982741415500641,SOME HAVE ACCEPTED IT AS AMIRACLE WITHOUT PHYSICAL EXPLANATION,0.3,['s a m h æ v ɛ k s ɛ p t ɪ d ɪ z ɐ m ɛ ɹ ɪ k ə w ɪ ð aʊ t f ɪ z ɪ k ɚ ɛ k s p l ə n eɪ ʃ ə n'],757.3809579466562
+p326_014.txt,3.897910714149475,TO THE HEBREWS IT WAS A TOKEN THAT THERE WOULD BE NO MORE UNIVERSAL FLOODS,0.06666666666666667,['t ə ð ə h eɪ b ɚ ɹ z ɪ t w z ɐ t oʊ k ə n ð æ d ð ɛ w ʊ d b iː n n oʊ d m oː j uː n ɪ v ɚ s ɚ f l ʌ d z'],682.2895766149503
+p326_015.txt,4.024084806442261,THE GREAKS USED TO IMAGINE THAT IT WAS A SON FROM THE GODS TO FORTEL WAR OR HEAVY REIGN,0.21052631578947367,['ð ə ɡ ɹ eɪ k s iː z t ə ɪ m æ dʒ ɪ n ð æ ɾ ɪ w ʌ z ə s n f ɹ ʌ m ð ə ɡ ɑː d z t ə f ɚ t ɛ l w oː oʊ h ɛ v iː ɹ aɪ n'],624.4980564746699
+p326_016.txt,3.8947084546089172,THE NORSEMAN CONSIDERED THE RAINBOW AS A BRIDGE OVER WHICH THE GODS PASS FROM THE EARTH TO THE HOME IN THE SKY,0.18181818181818182,['ð ə n oː s m ə n k ə n s ɪ d ə d ð ə ɹ aɪ m b ɪ z ə b ɹ ɪ dʒ ɑː v w ɪ dʒ ð ə ɡ ɑː d p ɑː s t f ɹ ʌ m ð ɪ ɚ θ t ə ð ə h aɪ m ɪ n ð ə s k aɪ'],691.4178498086782
+p326_017.txt,4.001785755157471,OTHERS HAVE TRIED TO EXPLAIN THE PHENOMENON PHYSICALLY,0.125,['ʌ ð ɚ z h æ v t ɹ aɪ d t ə ɪ k s p l eɪ n ð ə f ə n ɔ m ə n ə n f ɪ z ɪ k l ɪ'],763.2171723863787
+p326_018.txt,3.877915620803833,ARISTOTLE THOUGHT THAT THE RAINBOW WAS CAUSED BY A REFLECTION OF THE SUN'S RAYS BY THE RAIN,0.125,['aʊ ɹ s ʌ t θ oː t ð ə ð ə ɹ aɪ m b oʊ w ʌ z k oː z p aɪ ɹ ɪ f l ɛ k ʃ ə n ʌ v ð ə s ʌ n z ɹ aɪ z b aɪ ð ə ɹ aɪ n'],554.9235757295044
+p326_019_000.txt,3.8919788002967834,SINCE THEN PHYSICISTS HAVE FOUND IT IS NOT REFLECTION,0.1111111111111111,['s ɪ n s ð ɛ n f ɪ z ɪ s ɪ s s h æ v f aɪ n d d ɪ t ɪ z n ɑː t ɹ ɪ f l ɛ k ʃ ə n'],766.0096842392417
+p326_019_001.txt,3.6602577567100525,BUT REFRACTION BY THE RAINDROPS WHICH CAUSES THE RAINBOWS,0.1111111111111111,['ʌ t ɹ ɪ f ɹ æ k ʃ ə n b aɪ ð ə ɹ aɪ n d ɹ ʌ p s w ɪ tʃ k oː z ɪ z ð ə ɹ aɪ m oʊ s t'],824.6635487257802
+p326_020.txt,3.808739483356476,MANY COMPLICATED IDEAS ABOUT THE RAINBOW HAVE BEEN FORMED,0.1111111111111111,['m ɛ n iː k ɔ m p l ɪ k aɪ t ɪ d aɪ d iː z ɐ b ɑː ð ə ɹ aɪ m b ɚ h æ v b ɪ n f oː m d'],628.5922153510368
+p326_021_000.txt,3.9725033044815063,THE DIFFERENCE IN THE RAINBOW DEPENDS CONSIDERABLY UPON THE SAWZS OF THE DROPS,0.15384615384615385,['ð ə d ɪ f ɹ ə n t s ɪ n ð ə ɹ aɪ m b d ɪ p ɛ n d z k ə s ɪ d ɚ b l aɪ p ɔ n ð ə s ɑː d z ʌ v ð ə d ɹ ʌ p'],892.513170767277
+p326_021_001.txt,3.850282669067383,AND THE WIDTH OF THE  COLORED BAND INCRASES AS THE SIZE OF THE DROPS INCREASES,0.13333333333333333,['æ n ð ə w ɪ θ ə v ð ə k ʌ l ə d b æ n d ɪ ŋ ɡ ɹ s z ɪ z s ɑː s ð ə d ɹ ɑː p s ɪ ŋ k ɹ eɪ s ɪ z'],853.7402691137805
+p326_022.txt,3.868734300136566,THE ACTUAL PRIMARY RAINBOW OBSERVED IS SAID TO BE THE EFFECT OF SUPREME POSITION OF A NUMBER OF BOWS,0.16666666666666666,['ð ɪ æ k ʃ w ʊ p ɹ aɪ m ɹ i ɹ aɪ m b oʊ b z ɚ v d ɪ s d t ɪ b ɪ ð ə ɪ f ɛ k t ɪ v s p ɹ ɪ p ə z ɪ ʃ ə n ʌ ɐ n ʌ m b ɚ ʌ v b æ z'],434.2591984590802
+p326_023_000.txt,3.918444871902466,IF THE READ OF THE SECOND BOWLFALLS UPON THE GRAIN OF THE FIRST,0.35714285714285715,['ɪ f ð ə ɹ ɛ d ʌ v ð ə s ɛ k ə n d b æ f oː l z ɐ p ɔ n ð ə ɡ ɹ eɪ n ʌ v ð ə f ɚ s t'],808.5345311622683
+p326_023_001.txt,3.8189017176628113,THE RESULT IS TO GIVE A BOW WITH AN ABNORMALLY WIDE YELLOW BAND,0.07692307692307693,['ð ə ɹ ɪ z ɔ l t ɪ z t ə ɡ ɪ v ɐ b æ w ɪ ð ə n æ b n oː m ə l i w aɪ d j ɛ l oʊ b æ n d'],782.4264534658076
+p326_023_002.txt,4.066121697425842,SINCE RED AND GRAIN LIGHT WHEN MIXED FORMELLAW,0.3333333333333333,['s ɪ n s ɹ ɛ d ə n ɡ ɹ aɪ n l aɪ t w ɛ n m ɪ k s f oː m j ɛ l'],746.487433413178
+p326_024_000.txt,3.829826831817627,THIS IS A VERY COMMON TOPE OF BEY,0.25,['ð ɪ s ɪ z ə v ɛ ɹ i k ɑː m ə n t aɪ b ɪ b aɪ'],774.2827514690633
+p326_024_001.txt,4.082155704498291,ONE SHOWING MILY RED AND YELLOW,0.3333333333333333,['w ʌ n ʃ oʊ m m aɪ l i ɹ ɛ d ɪ n d j ɛ l oʊ'],867.9535283215045
+p326_024_002.txt,3.748307526111603,WITH LITTLE ONIGRANABLY,0.7142857142857143,['w ɪ ð l ɪ s ɪ l ɔ n aɪ ɡ ɹ aɪ n oː b l aɪ'],819.4315493126479
